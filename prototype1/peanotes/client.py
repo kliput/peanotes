@@ -2,16 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import spade
 import time
 import re
-import time
 
-from spade import *
+import spade
 
-class InitBehaviour(Behaviour.OneShotBehaviour):
+class InitBehaviour(spade.Behaviour.OneShotBehaviour):
 	def __init__(self, serverReceiver):
-		Behaviour.OneShotBehaviour.__init__(self)
+		spade.Behaviour.OneShotBehaviour.__init__(self)
 		self.serverReceiver = serverReceiver
 	
 	def onStart(self):
@@ -38,7 +36,7 @@ class InitBehaviour(Behaviour.OneShotBehaviour):
 		print "End."
 		self.myAgent.stop()
 
-class ClientAgent(Agent.Agent):
+class ClientAgent(spade.Agent.Agent):
 	def _setup(self):
 		print "Client setup..."
 		#self.setDebugToScreen()
