@@ -13,6 +13,9 @@ class Note(QWidget):
         self.NOTE_WIDTH = 200
         self.NOTE_HEIGHT = 230
         
+        self.drag = False # czy karteczka jest w trakcie przenoszenia?
+        self.dragPos = QPoint() # pozycja rozpoczecia przenoszenia
+        
         assert message
         
         self.setWindowFlags(Qt.FramelessWindowHint)
@@ -33,6 +36,18 @@ class Note(QWidget):
         painter = QPainter(self)
         self.paintBackground(painter)
         pass
+    
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag = True
+            self.dragPos = event.globalPos() - self.pos()
+    
+    def mouseReleaseEvent(self, event):
+        self.drag = False
+    
+    def mouseMoveEvent(self, event):
+        if self.drag:
+            self.move(event.globalPos() - self.dragPos)
     
     def setMessage(self, message):
         assert message
@@ -79,7 +94,23 @@ class LocalSettings(object):
         pass
 
 def main_tests():
-    pass
+    
+        
+    client = Client()
+    print client.msgBox.getMsgByState(MsgState.NEW)
+    
+    app = QApplication(sys.argv)
+    
+    loginWindow = LoginWindow()
+    loginWindow.show()
+
+    allNotes = []
+    for _, msg in client.msgBox.getMsgAll().items():
+        allNotes.append(SolidNote(msg))
+    
+    for note in allNotes: note.show()
+        
+    return app.exec_()
     
 #     desktop = QApplication.desktop()
     
@@ -100,6 +131,7 @@ def main_tests():
 #     note1.show()
     
 #     note = QX11Info.isCompositingManagerRunning() and TransculentNote() or SolidNote()
+
 
 if __name__ == '__main__':
     main_tests()
