@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 import datetime, random
+from PySide.QtCore import QObject, Signal
 
 class MsgState():
     NEW = 1
@@ -46,8 +49,18 @@ class MessageBox(object):
     def synchronize(self):
         raise NotImplementedError
 
-class Client(object):
+class LoginState(object):
+    OK = 1
+    FAIL = 2
+
+class PeanotesClient(QObject):
+    # to sygnał, który po prostu się wywołuje w kodzie "loggedIn.emit(<stan>)"
+    # w miejscu, w którym chcemy powiadamiać o poprawnym zalogowaniu się
+    loggedIn = Signal(LoginState)    
+    
     def __init__(self):
+        QObject.__init__(self)
+        
         self.msgBox = MessageBox()
         # TESTING CODE ->
         self.msgBox.addMsg(Message("Hello world!",
@@ -59,3 +72,9 @@ class Client(object):
                                    datetime.datetime(2014, 10, 18, 11, 33),
                                    MsgState.READED))
         # <- TESTING CODE
+            
+    def login(self, login, password):
+        # logowanie na serwerze...
+        # jesli wszystko poszlo dobrze:
+        # signal:
+        self.signalLoggedIn.emit(LoginState.OK)

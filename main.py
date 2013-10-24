@@ -1,22 +1,16 @@
-from core_mock import *
-from gui import * 
+#!/usr/bin/env python2.7
 
-def main():
-    
-    client = Client()
-    print client.msgBox.getMsgByState(MsgState.NEW)
-    
+import sys
+
+from PySide.QtGui import QApplication
+
+from core_mock import PeanotesClient 
+from gui import MainGui 
+
+def main():    
     app = QApplication(sys.argv)
-    
-    loginWindow = LoginWindow()
-    loginWindow.show()
-
-    allNotes = []
-    for _, msg in client.msgBox.getMsgAll().items():
-        allNotes.append(SolidNote(msg))
-    
-    for note in allNotes: note.show()
-        
+    client = PeanotesClient()
+    gui = MainGui(client)
     return app.exec_()
 
 
