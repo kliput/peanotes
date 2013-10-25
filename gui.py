@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import pickle, sys
-from core_mock import PeanotesClient, LoginState
+import pickle, sys, datetime
+from core_mock import PeanotesClient, LoginState, MsgState, Message
 from PySide import QtGui
 from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
+
+trUtf8 = QObject.trUtf8
 
 class Note(QWidget):
     def __init__(self, message, parent=None):
@@ -51,27 +53,50 @@ class Note(QWidget):
         self.fromToForm.setWidget(1, QtGui.QFormLayout.FieldRole, self.toData)
         self.upperHLayout.addLayout(self.fromToForm)
         
+        # -- tylko dla do wysłania --
+        
+        self.sendButton = QPushButton(u"&Send")
+        self.sendButton.setObjectName("sendButton")
+        self.sendButton.setStyleSheet('''
+        QPushButton#sendButton {
+            padding: 4px;
+            border-style: solid;
+            background-color: rgba(255, 255, 255, 80);
+            border-radius: 3px;
+        };
+        ''')
+        sendIcon = QtGui.QIcon()
+        sendIcon.addPixmap(QtGui.QPixmap("send.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.sendButton.setIcon(sendIcon)
+        
+        sendSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        self.sendButton.setSizePolicy(sendSizePolicy)
+        
+        self.upperHLayout.addWidget(self.sendButton)
+        
+        
         self.closeButton = QtGui.QPushButton(self)
 
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.closeButton.sizePolicy().hasHeightForWidth())
+        closeSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        closeSizePolicy.setHorizontalStretch(0)
+        closeSizePolicy.setVerticalStretch(0)
+        closeSizePolicy.setHeightForWidth(self.closeButton.sizePolicy().hasHeightForWidth())
+        self.closeButton.setSizePolicy(closeSizePolicy)
         
-        self.closeButton.setSizePolicy(sizePolicy)
         # TODO: usunąć bevel przy najechaniu i naciskaniu
-        self.closeButton.setStyleSheet('''QPushButton#closeButton { 
+        self.closeButton.setStyleSheet('''
+        QPushButton#closeButton {
+            background-color: transparent;
             border-width: 0px;
-            min-width: 16px;
-            max-width: 16px;
-            min-height: 16px;
-            max-height: 16px; };''')
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("close.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.closeButton.setIcon(icon)
-        self.closeButton.setFlat(True)
+            width: 16px;
+            height: 16px; 
+        };''')
+        closeIcon = QtGui.QIcon()
+        closeIcon.addPixmap(QtGui.QPixmap("close.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.closeButton.setIcon(closeIcon)
         self.closeButton.setObjectName("closeButton")
         self.upperHLayout.addWidget(self.closeButton)
+        
         self.globalVLayout.addLayout(self.upperHLayout)
 
         self.line = QtGui.QFrame(self)
@@ -143,6 +168,11 @@ class Note(QWidget):
         self.dateData.setText(str(message.create_date))
         self.validData.setText(str(message.expire_date))
         self.noteContent.setHtml(message.content)
+        
+        if message.state == MsgState.TO_SEND:
+            self.sendButton.show()
+        else:
+            self.sendButton.hide()
     
     def getMessage(self):
         return self.__message__
@@ -202,6 +232,63 @@ class SolidNote(Note):
 #         self.formSubmitted.emit(self.loginEdit.text(), self.passwordEdit.text())
 #         # TODO: efekt ładowania - oczekiwanie na odpowiedź mainGui
 
+class TrayIcon(QSystemTrayIcon):
+    def __init__(self, mainGui):
+        QSystemTrayIcon.__init__(self)
+        
+        self.mainGui = mainGui
+        
+        icon = QIcon('icon.png')
+        self.setIcon(icon)
+        self.activated.connect(self.handleActivation)
+        self.show()
+        
+        # --- MENU ---
+        
+        self.menu = QMenu(QApplication.desktop())
+        
+        # TODO: ikonki dla pozycji w menu
+        self.actQuit = QAction(u"&Quit", self.menu)
+        self.menu.addAction(self.actQuit)
+        self.actQuit.triggered.connect(mainGui.closeApplication)
+        
+        self.actSettings = QAction(u"&Settings", self.menu)
+        self.menu.addAction(self.actSettings)
+        self.actSettings.triggered.connect(mainGui.showSettings)
+
+        self.actHideNotes = QAction(u"&Hide notes", self.menu)
+        self.menu.addAction(self.actHideNotes)
+        self.actHideNotes.triggered.connect(mainGui.hideNotes)
+        
+        self.actShowNotes = QAction(u"&Show notes", self.menu)
+        self.menu.addAction(self.actShowNotes)
+        self.actShowNotes.triggered.connect(mainGui.showNotes)
+        
+        self.actNewNote = QAction(u"&New note", self.menu)
+        self.menu.addAction(self.actNewNote)
+        self.actNewNote.triggered.connect(mainGui.newNote)
+        
+        self.setContextMenu(self.menu)
+        
+    @Slot(QSystemTrayIcon.ActivationReason)
+    def handleActivation(self, reason):
+        global NOTES
+        global NOTE_ID
+        
+        if reason == QSystemTrayIcon.DoubleClick:
+            print "Double"
+        
+        elif reason == QSystemTrayIcon.Trigger: # lewy przycisk
+            self.mainGui.showNotes()
+                
+#        elif reason == QSystemTrayIcon.Context: # prawy przycisk
+#            print 'bye!'
+#            sys.exit(0)
+#            # TODO: menu
+            
+        elif reason == QSystemTrayIcon.MiddleClick: # środkowy przycisk
+            self.mainGui.newNote()
+
 class LocalSettings(object):
     def __init__(self):
         self.notes = {} # msgId -> note
@@ -211,6 +298,9 @@ class MainGui(QObject):
     
     def __init__(self, client):
         self.client = client
+        
+        QTextCodec.setCodecForTr(QTextCodec.codecForName("UTF-8"))
+        
         # połączenia ->
 #         self.client.loggedIn.connect(self.handleLoginState)
         # TODO: dodano notatkę
@@ -223,9 +313,15 @@ class MainGui(QObject):
 #         
 #         self.loginWindow.formSubmitted.connect(self.handleLoginForm)
         
+        self.trayIcon = TrayIcon(self)
+        
+        self.localMessagesIds = []
         self.allNotes = []
         
         self.handleUpdateMessageBox()
+    
+        # TODO: nazwa użytkownika
+        self.userName = "Johnny"
     
 #     @Slot(str, str)
 #     def handleLoginForm(self, user, password):
@@ -242,14 +338,52 @@ class MainGui(QObject):
     
     @Slot()
     def handleUpdateMessageBox(self):
+        
+        # TODO: zmienić na obliczanie różnicy zbiorów
+        # NOTICE, WARNING!
+        for note in self.allNotes:
+            note.close()
+            
+        self.allNotes = []
+        # ---^ kod do zmiany!
+        
+        
         for _, msg in self.client.msgBox.getMsgAll().items():
             self.allNotes.append(SolidNote(msg))
     
         for note in self.allNotes: note.show()
     
     @Slot()
-    def handleCloseApplication(self):
-        self.saveSettings(self.localSettings)
+    def closeApplication(self):
+#        self.saveSettings(self.localSettings) # TODO: settings
+        QApplication.quit()
+        # TODO: ikona w trayu nie znika
+        
+    @Slot()
+    def showSettings(self):
+        # TODO: settings window
+        pass
+    
+    @Slot()
+    def hideNotes(self):
+        for note in self.allNotes:
+            note.hide()
+    
+    @Slot()
+    def showNotes(self):
+        for note in self.allNotes:
+            note.show()
+            note.raise_()
+            note.activateWindow()
+
+    @Slot()
+    def newNote(self):
+        # TODO: domyślna data ważności, możliwość zmiany daty ważności
+        createDate = datetime.datetime.today()
+        expireDate = createDate + datetime.timedelta(0, 1, 0) # 1 miesiąc
+        m = Message(u'', self.userName, [], datetime.datetime.today(), expireDate, MsgState.TO_SEND)
+        self.client.msgBox.addMsg(m) # TODO: addMsg emituje zmianę zawartości
+        self.handleUpdateMessageBox()
         
 #     def loadSettings(self):
 #         'TODO: dodać domyślne'        
