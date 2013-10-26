@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import pickle, sys, datetime
-from core_mock import PeanotesClient, LoginState, MsgState, Message
+from core_mock import PeanotesClient, LoginState
+from message_factory import MsgState, Message, MessageFactory
 from PySide import QtGui
 from PySide import QtCore
 from PySide.QtCore import *
@@ -379,9 +380,16 @@ class MainGui(QObject):
     @Slot()
     def newNote(self):
         # TODO: domyślna data ważności, możliwość zmiany daty ważności
-        createDate = datetime.datetime.today()
-        expireDate = createDate + datetime.timedelta(0, 1, 0) # 1 miesiąc
-        m = Message(u'', self.userName, [], datetime.datetime.today(), expireDate, MsgState.TO_SEND)
+        # do domyslnej daty waznosci mozna wykorzystac MessageFactory, pozniej mozemy podpiac do fabryki wstrzykiwanie domyslnych ustawien
+        messageFactory = MessageFactory()
+        messageFactory.set_sender(self.userName)
+        messageFactory.set_expiredate_policy(MessageFactory.POLICY_EXPIREDATE_DAYS)
+        messageFactory.set_days_to_expire(31)
+        messageFactory.set_state(MsgState.TO_SEND)
+        #createDate = datetime.datetime.today()
+        #expireDate = createDate + datetime.timedelta(0, 1, 0) # 1 miesiąc
+        #m = Message(u'', self.userName, [], datetime.datetime.today(), expireDate, MsgState.TO_SEND, uuid.uuid4())
+        m = messageFactory.build()
         self.client.msgBox.addMsg(m) # TODO: addMsg emituje zmianę zawartości
         self.handleUpdateMessageBox()
         

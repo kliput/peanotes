@@ -44,6 +44,7 @@ class MessageFactory(object):
         self.content = ""
         self.policy = MessageFactory.POLICY_EXPIREDATE_DAYS
         self.state = MsgState.NEW
+        self.recipients = []
     def set_content(self, content):
         self.content = content
     def set_sender(self, sender):
