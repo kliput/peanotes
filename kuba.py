@@ -1,7 +1,9 @@
 from client_agent import ClientAgent
 
+import sys
+
 if __name__ == '__main__':
-    a = ClientAgent("kuba@127.0.0.1", "secret")
+    a = ClientAgent(sys.argv[1], "secret")
     a.start()
     alive = True
     import time, sys

@@ -9,7 +9,7 @@ from gui import MainGui
 
 def main():    
     app = QApplication(sys.argv)
-    client = PeanotesClient()
+    client = PeanotesClient(sys.argv[1], "secret")
     gui = MainGui(client)
     return app.exec_()
 

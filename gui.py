@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import pickle, sys, datetime
-from core_mock import PeanotesClient, LoginState
+
 from message_factory import MsgState, Message, MessageFactory
+
 from PySide import QtGui
 from PySide import QtCore
 from PySide.QtCore import *
@@ -349,7 +350,7 @@ class MainGui(QObject):
         # ---^ kod do zmiany!
         
         
-        for _, msg in self.client.msgBox.getMsgAll().items():
+        for _, msg in self.client.getMsgAll().items():
             self.allNotes.append(SolidNote(msg))
     
         for note in self.allNotes: note.show()
@@ -390,7 +391,7 @@ class MainGui(QObject):
         #expireDate = createDate + datetime.timedelta(0, 1, 0) # 1 miesiąc
         #m = Message(u'', self.userName, [], datetime.datetime.today(), expireDate, MsgState.TO_SEND, uuid.uuid4())
         m = messageFactory.build()
-        self.client.msgBox.addMsg(m) # TODO: addMsg emituje zmianę zawartości
+        self.client.addMsg(m) # TODO: addMsg emituje zmianę zawartości
         self.handleUpdateMessageBox()
         
 #     def loadSettings(self):

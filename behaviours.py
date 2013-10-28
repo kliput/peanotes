@@ -1,6 +1,7 @@
 import spade.Behaviour
 import serializer
 from message_factory import MsgState
+from spade.Behaviour import OneShotBehaviour
 # Default behaviour
 class DefaultBehavior(spade.Behaviour.Behaviour):
     def _process(self):
@@ -32,6 +33,7 @@ class SyncRespondBehaviour(spade.Behaviour.Behaviour): # Server
             print "I waited but got no message"
             
 class SyncRequestBehaviour(spade.Behaviour.OneShotBehaviour):
+        
     def _process(self):
         msg = spade.ACLMessage.ACLMessage()  # Instantiate the message
         msg.setPerformative("inform")        # Set the "inform" FIPA performative
@@ -76,6 +78,7 @@ class ClientNewMessageBehaviour(spade.Behaviour.Behaviour):
         if msg: # Check whether the message arrived
             msgNote = serializer.deserialize(msg.content)
             print msgNote
+            self.myAgent.peaClient.agentUpdated([msgNote])
             
 # these lines were added to check, if updating msg on server works correctly
 # at the time it worked, so if nothing changes the code can be used to update message state

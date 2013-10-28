@@ -3,7 +3,12 @@ import spade
 import serializer
 from behaviours import *
 class ClientAgent(spade.Agent.Agent):
-        
+    def __init__(self, jid, password, peaClient=None):
+        self.peaClient = peaClient
+        self.jid = jid
+        self.peaClient = peaClient
+        spade.Agent.Agent.__init__(self, jid, password)
+      
     def _setup(self):
         print "ClientAgent starting . . ."
         self.addBehaviour(ClientNewMessageBehaviour(), ClientNewMessageBehaviour.get_msg_template())        
