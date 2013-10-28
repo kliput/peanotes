@@ -325,6 +325,9 @@ class MainGui(QObject):
         # TODO: nazwa użytkownika
         self.userName = "Johnny"
     
+        self.client.boxUpdated.connect(self.handleUpdateMessageBox)
+        
+    
 #     @Slot(str, str)
 #     def handleLoginForm(self, user, password):
 #         self.client.login(user, password)
