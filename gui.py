@@ -184,6 +184,7 @@ class Note(QWidget):
     def sendMessage(self):
         print 'sending: %s' % str(self.__message__.msg_uuid)
         print 'recpt: %s' % str(self.__message__.recipients)
+        self.__message__.content = self.noteContent.toPlainText()
         self.mainGui.client.addMsg(self.__message__)
     
     def getMessage(self):
@@ -395,7 +396,7 @@ class MainGui(QObject):
         # do domyslnej daty waznosci mozna wykorzystac MessageFactory, pozniej mozemy podpiac do fabryki wstrzykiwanie domyslnych ustawien
         messageFactory = MessageFactory()
         messageFactory.set_sender(self.userName)
-        messageFactory.set_recipients(['piotrek'])
+        messageFactory.set_recipients(['piotrek', 'marek'])
         messageFactory.set_expiredate_policy(MessageFactory.POLICY_EXPIREDATE_DAYS)
         messageFactory.set_days_to_expire(31)
         messageFactory.set_state(MsgState.GUI)
