@@ -38,8 +38,8 @@ class SyncRequestBehaviour(spade.Behaviour.OneShotBehaviour):
         msg = spade.ACLMessage.ACLMessage()  # Instantiate the message
         msg.setPerformative("inform")        # Set the "inform" FIPA performative
         msg.setOntology(sync_ontology)        # Set the ontology of the message content
-        receiver = spade.AID.aid(name="message.server"+"@"+self.getDomain(), 
-                                 addresses=["xmpp://message.server"+"@"+self.getDomain()])
+        receiver = spade.AID.aid(name="message.server"+"@"+self.myAgent.getDomain(), 
+                                 addresses=["xmpp://message.server"+"@"+self.myAgent.getDomain()])
         msg.addReceiver(receiver)            # Add the message receiver
         #msg.setContent(dumpedMsg)        # Set the message content
         self.myAgent.send(msg)
