@@ -79,7 +79,7 @@ class ClientNewMessageBehaviour(spade.Behaviour.Behaviour):
             
 # these lines were added to check, if updating msg on server works correctly
 # at the time it worked, so if nothing changes the code can be used to update message state
-#            msgNote.state = MsgState.READED 
+#            msgNote.state = MsgState.READ 
 #            self.myAgent.updateMsg(msgNote)
 
 # it is the right place to do sth with the message - either add it to msgBox, or execute some listener

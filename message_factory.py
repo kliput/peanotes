@@ -5,9 +5,10 @@ import uuid
 
 class MsgState():
     NEW = 1
-    READED = 2
+    READ = 2
     TO_SEND = 3
     SENT = 4
+    DELETED = 5
 
 class Message():
     def __str__(self):
