@@ -38,8 +38,8 @@ class SyncRequestBehaviour(spade.Behaviour.OneShotBehaviour):
         msg = spade.ACLMessage.ACLMessage()  # Instantiate the message
         msg.setPerformative("inform")        # Set the "inform" FIPA performative
         msg.setOntology(sync_ontology)        # Set the ontology of the message content
-        receiver = spade.AID.aid(name="message.server@127.0.0.1", 
-                                 addresses=["xmpp://message.server@127.0.0.1"])
+        receiver = spade.AID.aid(name="message.server"+"@"+self.getDomain(), 
+                                 addresses=["xmpp://message.server"+"@"+self.getDomain()])
         msg.addReceiver(receiver)            # Add the message receiver
         #msg.setContent(dumpedMsg)        # Set the message content
         self.myAgent.send(msg)
@@ -58,7 +58,7 @@ class ServerNewMessageBehaviour(spade.Behaviour.Behaviour):
         msg = self._receive(True)
         if msg: # Check whether the message arrived
             msgNote = serializer.deserialize(msg.content)
-            print "new msg arrived, =", msgNote
+            #print "new msg arrived, =", msgNote
             self.myAgent.msgManager.add_msg_to_sender(msgNote, state=MsgState.SENT)
             self.myAgent.msgManager.add_msg_to_users(msgNote, msgNote.recipients, state=MsgState.NEW)  
             msgNote.state = MsgState.NEW
