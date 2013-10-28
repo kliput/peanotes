@@ -4,6 +4,7 @@ import datetime
 import uuid
 
 class MsgState():
+    GUI = 0
     NEW = 1
     READ = 2
     TO_SEND = 3

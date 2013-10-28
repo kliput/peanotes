@@ -7,30 +7,30 @@ from message_factory import Message
 
 from client_agent import ClientAgent
 
-class MessageBox(object):
-    def __init__(self):
-        self.__box__ = {}
-    def addMsg(self, message):
-        'message - typ: Message'
-        self.__box__[message.msg_uuid] = message
-    def delMsg(self, message):
-        try:
-            del self.__box__[message.msg_uuid]
-        except KeyError:
-            print "Tried to remove non-existent message with id: %d" % message.msg_uuid
-    def modMsg(self, message):
-        if not isinstance(message, Message):
-            raise TypeError
-        try:
-            self.__box__[message.msg_uuid] = message
-        except:
-            print "Tried to modify non-existent message with id: %d" % message.msg_uuid
-    def getMsgByState(self, state):
-        return {mid: msg for (mid, msg) in self.__box__.items() if msg.state == state}
-    def getMsgAll(self):
-        return self.__box__
-    def synchronize(self):
-        raise NotImplementedError
+# class MessageBox(object):
+#     def __init__(self):
+#         self.__box__ = {}
+#     def addMsg(self, message):
+#         'message - typ: Message'
+#         self.__box__[message.msg_uuid] = message
+#     def delMsg(self, message):
+#         try:
+#             del self.__box__[message.msg_uuid]
+#         except KeyError:
+#             print "Tried to remove non-existent message with id: %d" % message.msg_uuid
+#     def modMsg(self, message):
+#         if not isinstance(message, Message):
+#             raise TypeError
+#         try:
+#             self.__box__[message.msg_uuid] = message
+#         except:
+#             print "Tried to modify non-existent message with id: %d" % message.msg_uuid
+#     def getMsgByState(self, state):
+#         return {mid: msg for (mid, msg) in self.__box__.items() if msg.state == state}
+#     def getMsgAll(self):
+#         return self.__box__
+#     def synchronize(self):
+#         raise NotImplementedError
 
 class LoginState(object):
     OK = 1
@@ -85,6 +85,7 @@ Fusce vulputate, ligula ac cursus lacinia, magna quam feugiat tellus, nec elemen
 
     def addMsg(self, message):
         'message - typ: Message'
+        message.state = MsgState.TO_SEND
         self.agent.sendMsg(message)
         import behaviours
         self.agent.runBehaviourOnce(behaviours.SyncRequestBehaviour())

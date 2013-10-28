@@ -3,6 +3,7 @@
 import pickle, sys, datetime
 
 from message_factory import MsgState, Message, MessageFactory
+import uuid
 
 from PySide import QtGui
 from PySide import QtCore
@@ -12,8 +13,10 @@ from PySide.QtGui import *
 trUtf8 = QObject.trUtf8
 
 class Note(QWidget):
-    def __init__(self, message, parent=None):
+    def __init__(self, message, mainGui, parent=None):
         super(Note, self).__init__(parent)
+        
+        self.mainGui = mainGui
         
         self.NOTE_WIDTH = 240
         self.NOTE_HEIGHT = 240
@@ -70,6 +73,8 @@ class Note(QWidget):
         sendIcon = QtGui.QIcon()
         sendIcon.addPixmap(QtGui.QPixmap("send.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.sendButton.setIcon(sendIcon)
+        
+        self.sendButton.clicked.connect(self.sendMessage)
         
         sendSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         self.sendButton.setSizePolicy(sendSizePolicy)
@@ -171,10 +176,15 @@ class Note(QWidget):
         self.validData.setText(str(message.expire_date))
         self.noteContent.setHtml(message.content)
         
-        if message.state == MsgState.TO_SEND:
+        if message.state == MsgState.GUI:
             self.sendButton.show()
         else:
             self.sendButton.hide()
+    
+    def sendMessage(self):
+        print 'sending: %s' % str(self.__message__.msg_uuid)
+        print 'recpt: %s' % str(self.__message__.recipients)
+        self.mainGui.client.addMsg(self.__message__)
     
     def getMessage(self):
         return self.__message__
@@ -324,6 +334,7 @@ class MainGui(QObject):
     
         # TODO: nazwa użytkownika
         self.userName = client.jid.split('@')[0]
+        print 'username: %s' % self.userName
     
         self.client.boxUpdated.connect(self.handleUpdateMessageBox)
         
@@ -351,7 +362,7 @@ class MainGui(QObject):
 
         for mid, msg in self.client.getMsgAll().items():
             if mid not in self.allNotes:
-                self.allNotes[mid] = SolidNote(msg)
+                self.allNotes[mid] = SolidNote(msg, self)
     
         for note in self.allNotes.values(): note.show()
     
@@ -373,7 +384,7 @@ class MainGui(QObject):
     
     @Slot()
     def showNotes(self):
-        for note in self.allNotes:
+        for note in self.allNotes.values():
             note.show()
             note.raise_()
             note.activateWindow()
@@ -384,15 +395,31 @@ class MainGui(QObject):
         # do domyslnej daty waznosci mozna wykorzystac MessageFactory, pozniej mozemy podpiac do fabryki wstrzykiwanie domyslnych ustawien
         messageFactory = MessageFactory()
         messageFactory.set_sender(self.userName)
+        messageFactory.set_recipients(['piotrek'])
         messageFactory.set_expiredate_policy(MessageFactory.POLICY_EXPIREDATE_DAYS)
         messageFactory.set_days_to_expire(31)
-        messageFactory.set_state(MsgState.TO_SEND)
+        messageFactory.set_state(MsgState.GUI)
+        messageFactory.set_content('')
+        
+        
         #createDate = datetime.datetime.today()
         #expireDate = createDate + datetime.timedelta(0, 1, 0) # 1 miesiąc
         #m = Message(u'', self.userName, [], datetime.datetime.today(), expireDate, MsgState.TO_SEND, uuid.uuid4())
         m = messageFactory.build()
-        self.client.addMsg(m) # TODO: addMsg emituje zmianę zawartości
+        
+        nnote = SolidNote(m, self)
+        nnote.noteContent.setReadOnly(False)
+        
+        self.allNotes[m.msg_uuid] = nnote
+        
+        # HACK TODO
         self.handleUpdateMessageBox()
+        
+        # TODO: niepotrzebne, lepiej jakiś refresh
+        #self.client.addMsg(m) # TODO: addMsg emituje zmianę zawartości
+        
+#         self.handleUpdateMessageBox()
+    
         
 #     def loadSettings(self):
 #         'TODO: dodać domyślne'        
