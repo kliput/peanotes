@@ -10,6 +10,9 @@ class MsgState():
     SENT = 4
 
 class Message():
+    def __str__(self):
+        return "Message[content=%s, sender=%s, recipients=%s, expire_date=%s, state=%s, msg_uuid=%s]" %(self.content, self.sender, self.recipients, self.expire_date, self.state, self.msg_uuid)
+
     def __init__(self, content, sender, recipients, create_date, expire_date, state, msg_uuid):
         '''
         content - tresc tesktowa
