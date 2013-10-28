@@ -24,11 +24,14 @@ class SyncRespondBehaviour(spade.Behaviour.Behaviour): # Server
         self.msg = None     
         self.msg = self._receive(True)
         if self.msg:
-            username = self.msg.sender.getName().split("@")[0]
-            print "SyncRespondBehaviour triggered by user=", username
-            msgNotes = self.myAgent.msgManager.get_msgs_for_username(username)
-            for msgNote in msgNotes.values():
-                self.myAgent.sendMsg(msgNote, [username])
+            try: # TODO FIND OUT WHY THIS CATCH IS NEEDED
+                username = self.msg.sender.getName().split("@")[0]
+            #print "SyncRespondBehaviour triggered by user=", username
+                msgNotes = self.myAgent.msgManager.get_msgs_for_username(username)
+                for msgNote in msgNotes.values():
+                    self.myAgent.sendMsg(msgNote, [username])
+            except Exception as e:
+                print e
         else:
             print "I waited but got no message"
             

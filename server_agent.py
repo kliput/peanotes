@@ -68,13 +68,14 @@ class ServerAgent(spade.Agent.Agent):
         mt = spade.Behaviour.MessageTemplate(template)
         self.addBehaviour(self.UserOfflineBehaviour(), mt)
 
+import sys
 if __name__ == "__main__":
-    a = ServerAgent("message.server@127.0.0.1", "secret")
+    a = ServerAgent("message.server@"+sys.argv[1], "secret")
     #a.wui.start()
-    #a.setDebugToScreen()
+    a.setDebugToScreen()
     a.start();
     alive = True
-    import time, sys
+    import time
     while alive:
         try:
             time.sleep(1)

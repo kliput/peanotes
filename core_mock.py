@@ -53,17 +53,19 @@ class PeanotesClient(QObject):
         
         self.__box__ = {}
         # TESTING CODE ->
-        c1 = u'''Maecenas sed interdum dolor, eu elementum mi. Proin feugiat pulvinar mi, id feugiat metus scelerisque et. Praesent scelerisque tellus a libero laoreet, varius consectetur felis iaculis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam justo dolor, vestibulum et adipiscing ut, pulvinar id risus. Etiam metus lorem, auctor at placerat ac, luctus et magna. Sed bibendum laoreet nulla. 
-Fusce vulputate, ligula ac cursus lacinia, magna quam feugiat tellus, nec elementum metus est ac diam. Curabitur erat ipsum, egestas eu sem quis, gravida blandit nulla. Fusce vel mi facilisis, mollis tortor id, dignissim metus. Integer iaculis dignissim eleifend. Curabitur condimentum euismod augue, a scelerisque nisi fermentum sit amet. Donec scelerisque ultricies mi nec elementum. Curabitur sagittis urna ac tincidunt ultrices. Praesent lobortis dolor ut arcu vestibulum adipiscing. Phasellus eget congue purus. In non scelerisque mi. Donec in tortor scelerisque, fringilla lectus id, ullamcorper erat. Phasellus eget tempor tellus. Donec vitae convallis enim.'''
-        factory = MessageFactory()
-        factory.set_sender('piotrek')
+#         c1 = u'''Maecenas sed interdum dolor, eu elementum mi. Proin feugiat pulvinar mi, id feugiat metus scelerisque et. Praesent scelerisque tellus a libero laoreet, varius consectetur felis iaculis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam justo dolor, vestibulum et adipiscing ut, pulvinar id risus. Etiam metus lorem, auctor at placerat ac, luctus et magna. Sed bibendum laoreet nulla. 
+# Fusce vulputate, ligula ac cursus lacinia, magna quam feugiat tellus, nec elementum metus est ac diam. Curabitur erat ipsum, egestas eu sem quis, gravida blandit nulla. Fusce vel mi facilisis, mollis tortor id, dignissim metus. Integer iaculis dignissim eleifend. Curabitur condimentum euismod augue, a scelerisque nisi fermentum sit amet. Donec scelerisque ultricies mi nec elementum. Curabitur sagittis urna ac tincidunt ultrices. Praesent lobortis dolor ut arcu vestibulum adipiscing. Phasellus eget congue purus. In non scelerisque mi. Donec in tortor scelerisque, fringilla lectus id, ullamcorper erat. Phasellus eget tempor tellus. Donec vitae convallis enim.'''
+#         factory = MessageFactory()
+#         factory.set_sender('piotrek')
+#         
+#         factory.set_content(c1)
+#         factory.set_recipients(['piotrek', 'marek'])
+#         self.addMsg(factory.build())
+#         factory.set_content(u'Inna wiadomość')
+#         factory.set_recipients(['piotrek', 'marek'])
+#         self.addMsg(factory.build())
         
-        factory.set_content(c1)
-        factory.set_recipients(['piotrek', 'marek'])
-        self.addMsg(factory.build())
-        factory.set_content(u'Inna wiadomość')
-        factory.set_recipients(['piotrek', 'marek'])
-        self.addMsg(factory.build())
+        
 #        self.msgBox.addMsg(Message(c1, 'kuba',
 #                                   ['piotrek', 'marek'],
 #                                   datetime.datetime.today(),
