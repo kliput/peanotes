@@ -48,6 +48,9 @@ class PeanotesClient(QObject):
         self.agent = ClientAgent(jid, password, self)
         self.agent.start()
         
+        self.jid = jid
+        self.password = password
+        
         self.__box__ = {}
         # TESTING CODE ->
         c1 = u'''Maecenas sed interdum dolor, eu elementum mi. Proin feugiat pulvinar mi, id feugiat metus scelerisque et. Praesent scelerisque tellus a libero laoreet, varius consectetur felis iaculis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam justo dolor, vestibulum et adipiscing ut, pulvinar id risus. Etiam metus lorem, auctor at placerat ac, luctus et magna. Sed bibendum laoreet nulla. 

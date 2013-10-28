@@ -318,12 +318,12 @@ class MainGui(QObject):
         self.trayIcon = TrayIcon(self)
         
         self.localMessagesIds = []
-        self.allNotes = []
+        self.allNotes = {}
         
         self.handleUpdateMessageBox()
     
         # TODO: nazwa użytkownika
-        self.userName = "Johnny"
+        self.userName = client.jid.split('@')[0]
     
         self.client.boxUpdated.connect(self.handleUpdateMessageBox)
         
@@ -346,17 +346,14 @@ class MainGui(QObject):
         
         # TODO: zmienić na obliczanie różnicy zbiorów
         # NOTICE, WARNING!
-        for note in self.allNotes:
-            note.close()
-            
-        self.allNotes = []
-        # ---^ kod do zmiany!
-        
-        
-        for _, msg in self.client.getMsgAll().items():
-            self.allNotes.append(SolidNote(msg))
+#         for note in self.allNotes.values():
+#             note.close()
+
+        for mid, msg in self.client.getMsgAll().items():
+            if mid not in self.allNotes:
+                self.allNotes[mid] = SolidNote(msg)
     
-        for note in self.allNotes: note.show()
+        for note in self.allNotes.values(): note.show()
     
     @Slot()
     def closeApplication(self):
