@@ -13,6 +13,7 @@ from PySide.QtGui import *
 trUtf8 = QObject.trUtf8
 
 class Note(QWidget):
+    
     def __init__(self, message, mainGui, parent=None):
         super(Note, self).__init__(parent)
         
@@ -144,8 +145,9 @@ class Note(QWidget):
         # ---
         
         self.closeButton.setShortcut(QtGui.QApplication.translate("Note", "Ctrl+Q", None, QtGui.QApplication.UnicodeUTF8))
-        self.noteContent.setHtml(QtGui.QApplication.translate("Note", "Hello world.", None, QtGui.QApplication.UnicodeUTF8))
-#         
+        self.closeButton.clicked.connect(self.closeNote)
+
+
         self.setMessage(message)
                 
 #     def paintEvent(self, *args, **kwargs):
@@ -164,6 +166,28 @@ class Note(QWidget):
         if self.drag:
             self.move(event.globalPos() - self.dragPos)
     
+    def updateMessageState(self):
+        s = self.__message__.state
+        if s == MsgState.GUI:
+            self.sendButton.show()
+#             self.sendButton.setText("Send")
+            self.noteContent.setReadOnly(False)
+        elif s == MsgState.TO_SEND:
+            self.sendButton.show()
+            self.sendButton.setDisabled(True)
+            # TODO: może być, ale zwiększa rozmiar notatki
+#             self.sendButton.setText("Sending...")
+            self.noteContent.setReadOnly(True)
+        elif s == MsgState.DELETED:
+            self.close()
+        else:
+            self.sendButton.hide()
+            self.noteContent.setReadOnly(True)
+    
+    def setMessageState(self, state):
+        self.__message__.state = state
+        self.updateMessageState()
+    
     def setMessage(self, message):
         assert message
         self.__message__ = message
@@ -176,19 +200,25 @@ class Note(QWidget):
         self.validData.setText(str(message.expire_date))
         self.noteContent.setHtml(message.content)
         
-        if message.state == MsgState.GUI:
-            self.sendButton.show()
-        else:
-            self.sendButton.hide()
+        self.updateMessageState()
     
     def sendMessage(self):
-        print 'sending: %s' % str(self.__message__.msg_uuid)
-        print 'recpt: %s' % str(self.__message__.recipients)
-        self.__message__.content = self.noteContent.toPlainText()
+        # tylko dla całkiem nowych wiadomości (w sumie tylko powinny być)
+        if self.__message__.state == MsgState.GUI:
+            self.__message__.content = self.noteContent.toPlainText()
+            self.setMessageState(MsgState.TO_SEND)
         self.mainGui.client.addMsg(self.__message__)
     
     def getMessage(self):
         return self.__message__
+    
+    @Slot()
+    def closeNote(self):
+        '''dla przycisku zamykania - tylko ustawia stan
+        reszta jest obsługiwana przez zmianę stanu'''
+        self.setMessageState(MsgState.DELETED)
+        # TODO: do tego można zrobić inną metodę przesyłającą tylko nowy stan...
+        self.mainGui.client.modMsg(self.__message__)
 
 class SolidNote(Note):
     def __init__(self, message=None, parent=None):
@@ -362,8 +392,19 @@ class MainGui(QObject):
 #             note.close()
 
         for mid, msg in self.client.getMsgAll().items():
-            if mid not in self.allNotes:
-                self.allNotes[mid] = SolidNote(msg, self)
+            if mid not in self.allNotes.keys():
+                # utworzenie nowej notatki
+                if not msg.state == MsgState.DELETED:
+                    self.allNotes[mid] = SolidNote(msg, self)
+            else:
+                print 'debug: already exists: %s' % str(mid)
+                # tylko ew. zmiana stanu
+                if msg.state == MsgState.DELETED:
+                    print 'state DELETED'
+                    self.allNotes[mid].close()
+                    del self.allNotes[mid]
+                else:
+                    self.allNotes[mid].setMessageState(msg.state)
     
         for note in self.allNotes.values(): note.show()
     
@@ -380,7 +421,7 @@ class MainGui(QObject):
     
     @Slot()
     def hideNotes(self):
-        for note in self.allNotes:
+        for note in self.allNotes.values():
             note.hide()
     
     @Slot()
@@ -402,14 +443,10 @@ class MainGui(QObject):
         messageFactory.set_state(MsgState.GUI)
         messageFactory.set_content('')
         
-        
-        #createDate = datetime.datetime.today()
-        #expireDate = createDate + datetime.timedelta(0, 1, 0) # 1 miesiąc
-        #m = Message(u'', self.userName, [], datetime.datetime.today(), expireDate, MsgState.TO_SEND, uuid.uuid4())
+            
         m = messageFactory.build()
         
         nnote = SolidNote(m, self)
-        nnote.noteContent.setReadOnly(False)
         
         self.allNotes[m.msg_uuid] = nnote
         

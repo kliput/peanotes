@@ -91,6 +91,10 @@ class PeanotesClient(QObject):
         self.agent.sendMsg(message)
         import behaviours
         self.agent.runBehaviourOnce(behaviours.SyncRequestBehaviour())
+    def modMsg(self, message):
+        self.agent.updateMsg(message)
+        import behaviours
+        self.agent.runBehaviourOnce(behaviours.SyncRequestBehaviour())
 #         self.__box__[message.msg_uuid] = message
 #     def delMsg(self, message):
 #         try:
