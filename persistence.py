@@ -32,7 +32,10 @@ class MessageManager(object):
             if not self.userData.has_key(user):
                 self.userData[user] = {}
     def get_msgs_for_username(self, username, state=None):
-        return self.userData[username]
+        if username in self.userData:
+            return self.userData[username]
+        else:
+            return {}
 
 
     def _loadData(self):

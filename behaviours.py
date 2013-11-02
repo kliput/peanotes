@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
 import spade.Behaviour
 import serializer
+import sys
+import traceback
 from message_factory import MsgState
 from spade.Behaviour import OneShotBehaviour
 # Default behaviour
@@ -24,14 +27,16 @@ class SyncRespondBehaviour(spade.Behaviour.Behaviour): # Server
         self.msg = None     
         self.msg = self._receive(True)
         if self.msg:
-            try: # TODO FIND OUT WHY THIS CATCH IS NEEDED
+            try:
                 username = self.msg.sender.getName().split("@")[0]
-            #print "SyncRespondBehaviour triggered by user=", username
+                print "SyncRespondBehaviour triggered by user=", username
                 msgNotes = self.myAgent.msgManager.get_msgs_for_username(username)
                 for msgNote in msgNotes.values():
                     self.myAgent.sendMsg(msgNote, [username])
-            except Exception as e:
-                print e
+            except Exception:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                traceback.print_exception(exc_type, exc_value, exc_traceback,
+                              limit=5, file=sys.stdout)
         else:
             print "I waited but got no message"
             
@@ -61,7 +66,7 @@ class ServerNewMessageBehaviour(spade.Behaviour.Behaviour):
         msg = self._receive(True)
         if msg: # Check whether the message arrived
             msgNote = serializer.deserialize(msg.content)
-            #print "new msg arrived, =", msgNote
+            print "new msg arrived, =", msgNote
             self.myAgent.msgManager.add_msg_to_sender(msgNote, state=MsgState.SENT)
             self.myAgent.msgManager.add_msg_to_users(msgNote, msgNote.recipients, state=MsgState.NEW)  
             msgNote.state = MsgState.NEW

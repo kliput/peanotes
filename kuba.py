@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from client_agent import ClientAgent
 
 import sys

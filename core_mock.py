@@ -120,3 +120,5 @@ class PeanotesClient(QObject):
         
         # TODO: przesyłanie nowych do gui 
         self.boxUpdated.emit()
+    def stopClient(self):
+        self.agent.stop()

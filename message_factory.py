@@ -13,7 +13,10 @@ class MsgState():
 
 class Message():
     def __str__(self):
-        return "Message[content=%s, sender=%s, recipients=%s, expire_date=%s, state=%s, msg_uuid=%s]" %(self.content, self.sender, self.recipients, self.expire_date, self.state, self.msg_uuid)
+        return "Message[content=%s, sender=%s, recipients=%s, expire_date=%s, state=%s, msg_uuid=%s]" %(self.content.encode("utf-8","replace"), self.sender, self.recipients, self.expire_date, self.state, self.msg_uuid)
+    
+    def __repr__(self):
+        return "Message[content=%s, sender=%s, recipients=%s, expire_date=%s, state=%s, msg_uuid=%s]" %(self.content.encode("utf-8","replace"), self.sender, self.recipients, self.expire_date, self.state, self.msg_uuid)
 
     def __init__(self, content, sender, recipients, create_date, expire_date, state, msg_uuid):
         '''
@@ -70,7 +73,6 @@ class MessageFactory(object):
         else:  # self.policy==self.POLICY_EXPIREDATE_DATE:
             expire_date = self.expire_date
         return Message(self.content, self.sender, self.recipients, datetime.datetime.today(), expire_date, self.state, uuid.uuid4())
-        # return Message(content, sender,
         
 if __name__ == "__main__":
     factory = MessageFactory()
