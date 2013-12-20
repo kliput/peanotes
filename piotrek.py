@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from client_agent import ClientAgent
-from message_factory import MessageFactory
+# TODO: DEPRECATED?
+from agents.client_agent import ClientAgent
+from core.message_factory import MessageFactory
 import sys
 if __name__ == "__main__":
     a = ClientAgent("piotrek@"+sys.argv[1], "secret")

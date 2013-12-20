@@ -1,9 +1,9 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
 import spade
-import serializer
+from core import serializer
 from behaviours import *
-from persistence import MessageManager
+from core.persistence import MessageManager
 class ServerAgent(spade.Agent.Agent):
     
  
@@ -20,19 +20,6 @@ class ServerAgent(spade.Agent.Agent):
             else:
                 print "I waited but got no message"
 
-# old working sendMsg           
-#    def sendMsg(self, message, receivers):
-#        msg = spade.ACLMessage.ACLMessage()  # Instantiate the message
-#        dumpedMsg = serializer.serialize(message)
-#        for recipient in receivers:
-#            receiverName = recipient+"@"+self.getDomain()
-#            receiverAddresses = ["xmpp://"+recipient+"@"+self.getDomain()]
-#            receiver = spade.AID.aid(name=receiverName,addresses=receiverAddresses)
-#            msg.addReceiver(receiver)            # Add the message receiver                  
-#        msg.setPerformative("inform")        # Set the "inform" FIPA performative
-#        msg.setOntology(new_msg_from_server_ontology)        # Set the ontology of the message content
-#        msg.setContent(dumpedMsg)        # Set the message content
-#        self.send(msg)
 
 # new send msg
     def sendMsg(self, message, receivers):
@@ -69,18 +56,4 @@ class ServerAgent(spade.Agent.Agent):
         mt = spade.Behaviour.MessageTemplate(template)
         self.addBehaviour(self.UserOfflineBehaviour(), mt)
 
-import sys
-if __name__ == "__main__":
-    a = ServerAgent("message.server@"+sys.argv[1], "secret")
-    #a.wui.start()
-    a.setDebugToScreen()
-    a.start();
-    alive = True
-    import time
-    while alive:
-        try:
-            time.sleep(1)
-        except KeyboardInterrupt:
-            alive=False
-    a.stop()
-    sys.exit(0)
+    

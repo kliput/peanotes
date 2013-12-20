@@ -1,6 +1,9 @@
-from message_factory import Message, MsgState
+from core.message_factory import Message, MsgState
 import copy
 import pickle
+
+SERVER_USERDATA_PATH = 'user_data/server_userdata.pkl'
+
 class MessageManager(object):
 
     def __init__(self):
@@ -37,11 +40,10 @@ class MessageManager(object):
         else:
             return {}
 
-
     def _loadData(self):
         data = None
         try:
-            with open('server_userdata.pkl', 'rb') as file_:
+            with open(SERVER_USERDATA_PATH, 'rb') as file_:
                 data = pickle.load(file_)
         except IOError:
             data = {}
@@ -49,7 +51,7 @@ class MessageManager(object):
     
     def _persistData(self, data):
         try:
-            with open('server_userdata.pkl', 'wb') as file_:
+            with open(SERVER_USERDATA_PATH, 'wb') as file_:
                 pickle.dump(data, file_)
         except IOError, e:
             print e

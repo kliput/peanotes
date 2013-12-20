@@ -1,3 +1,6 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
 import sys
 from agents.server_agent import ServerAgent
 

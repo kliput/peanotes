@@ -2,7 +2,7 @@
 
 import pickle, sys, datetime
 
-from message_factory import MsgState, Message, MessageFactory
+from core.message_factory import MsgState, Message, MessageFactory
 import uuid
 
 from PySide import QtGui
@@ -10,7 +10,18 @@ from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
 
+import gui # self import for module path
+
+import os
+IMAGES_PATH = "%s/images" % os.path.dirname(gui.__file__)
+
+DATETIME_FORMAT = '%d-%m-%Y, %H:%M'
+
 trUtf8 = QObject.trUtf8
+
+def get_image(file_name):
+    return "%s/%s" % (IMAGES_PATH, file_name)
+
 
 class Note(QWidget):
     
@@ -24,7 +35,7 @@ class Note(QWidget):
         
         self.resize(self.NOTE_WIDTH, self.NOTE_HEIGHT)
         
-        self.setObjectName("Note")
+        self.setObjectName("note")
         
         self.drag = False # czy karteczka jest w trakcie przenoszenia?
         self.dragPos = QPoint() # pozycja rozpoczecia przenoszenia
@@ -33,15 +44,23 @@ class Note(QWidget):
          
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
         
-        # ---
         
+        # -- główne layouty --
+                
         self.globalVLayout = QtGui.QVBoxLayout(self)
         self.globalVLayout.setObjectName("globalVLayout")
         
         self.upperHLayout = QtGui.QHBoxLayout()
         self.upperHLayout.setObjectName("upperHLayout")
+        self.globalVLayout.addLayout(self.upperHLayout)
         
         self.fromToForm = QtGui.QFormLayout()
+        self.upperHLayout.addLayout(self.fromToForm)
+        
+        self.upperButtonsLayout = QtGui.QGridLayout()
+        self.upperHLayout.addLayout(self.upperButtonsLayout)
+        
+        # -- layout z nadawcą i adresatami --
         self.fromToForm.setSizeConstraint(QtGui.QLayout.SetFixedSize)
         self.fromToForm.setFieldGrowthPolicy(QtGui.QFormLayout.ExpandingFieldsGrow)
         self.fromToForm.setObjectName("fromToForm")
@@ -57,61 +76,58 @@ class Note(QWidget):
         self.toData = QtGui.QLabel(self)
         self.toData.setObjectName("toData")
         self.fromToForm.setWidget(1, QtGui.QFormLayout.FieldRole, self.toData)
-        self.upperHLayout.addLayout(self.fromToForm)
+
         
-        # -- tylko dla do wysłania --
+        # -- przyciski w prawym górnym rogu
         
-        self.sendButton = QPushButton(u"&Send")
+        # -- przycisk wysłania --        
+        self.sendButton = QPushButton(u"&Send", self)
         self.sendButton.setObjectName("sendButton")
-        self.sendButton.setStyleSheet('''
-        QPushButton#sendButton {
-            padding: 4px;
-            border-style: solid;
-            background-color: rgba(255, 255, 255, 80);
-            border-radius: 3px;
-        };
-        ''')
         sendIcon = QtGui.QIcon()
-        sendIcon.addPixmap(QtGui.QPixmap("send.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        sendIcon.addPixmap(QtGui.QPixmap(get_image("send.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.sendButton.setIcon(sendIcon)
-        
         self.sendButton.clicked.connect(self.sendMessage)
-        
         sendSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         self.sendButton.setSizePolicy(sendSizePolicy)
+#         self.upperHLayout.addWidget(self.sendButton)
+        self.upperButtonsLayout.addWidget(self.sendButton, 0, 0)
         
-        self.upperHLayout.addWidget(self.sendButton)
-        
-        
+        # -- przycisk zamykania
         self.closeButton = QtGui.QPushButton(self)
-
+        self.closeButton.setObjectName("closeButton")
         closeSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
         closeSizePolicy.setHorizontalStretch(0)
         closeSizePolicy.setVerticalStretch(0)
         closeSizePolicy.setHeightForWidth(self.closeButton.sizePolicy().hasHeightForWidth())
         self.closeButton.setSizePolicy(closeSizePolicy)
-        
-        # TODO: usunąć bevel przy najechaniu i naciskaniu
-        self.closeButton.setStyleSheet('''
-        QPushButton#closeButton {
-            background-color: transparent;
-            border-width: 0px;
-            width: 16px;
-            height: 16px; 
-        };''')
         closeIcon = QtGui.QIcon()
-        closeIcon.addPixmap(QtGui.QPixmap("close.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        closeIcon.addPixmap(QtGui.QPixmap(get_image("close.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.closeButton.setIcon(closeIcon)
-        self.closeButton.setObjectName("closeButton")
-        self.upperHLayout.addWidget(self.closeButton)
+#         self.upperHLayout.addWidget(self.closeButton)
+        self.upperButtonsLayout.addWidget(self.closeButton, 0, 1)
         
-        self.globalVLayout.addLayout(self.upperHLayout)
+        # -- przycisk do dat
+        self.datesButton = QtGui.QPushButton(self)
+        self.datesButton.setCheckable(True)
+        self.datesButton.setObjectName("datesButton")
+        closeSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        closeSizePolicy.setHorizontalStretch(0)
+        closeSizePolicy.setVerticalStretch(0)
+        closeSizePolicy.setHeightForWidth(self.datesButton.sizePolicy().hasHeightForWidth())
+        self.datesButton.setSizePolicy(closeSizePolicy)
+        closeIcon = QtGui.QIcon()
+        closeIcon.addPixmap(QtGui.QPixmap(get_image("calendar.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.datesButton.setIcon(closeIcon)
+        self.upperButtonsLayout.addWidget(self.datesButton, 1, 1)
 
+        # -- linia oddzielająca nagłówek od treści
         self.line = QtGui.QFrame(self)
         self.line.setFrameShape(QtGui.QFrame.HLine)
         self.line.setFrameShadow(QtGui.QFrame.Sunken)
         self.line.setObjectName("line")
         self.globalVLayout.addWidget(self.line)
+
+        # -- DATES --
 
         # TODO: zmniejszyć czcionkę?
         self.datesForm = QtGui.QFormLayout()
@@ -128,13 +144,19 @@ class Note(QWidget):
         self.validData = QtGui.QLabel(self)
         self.validData.setObjectName("validData")
         self.datesForm.setWidget(1, QtGui.QFormLayout.FieldRole, self.validData)
-        self.globalVLayout.addLayout(self.datesForm)
 
+        self.datesWidget = QtGui.QWidget()
+        self.datesWidget.setLayout(self.datesForm)
+        self.globalVLayout.addWidget(self.datesWidget)
+        
+        # -- obsługa chowania dat
+        self.datesWidget.hide()
+        self.datesButton.toggled.connect(self.toggleDatesWidget)
 
+        
+        # -- pole treści
         self.noteContent = QtGui.QTextBrowser(self)
         self.noteContent.setEnabled(True)
-        self.noteContent.setStyleSheet('''QTextBrowser#noteContent {
-        background-color: rgba(255, 255, 255, 80); };''')
         
         self.noteContent.setFrameShape(QtGui.QFrame.NoFrame)
         self.noteContent.setFrameShadow(QtGui.QFrame.Plain)
@@ -142,17 +164,14 @@ class Note(QWidget):
         self.noteContent.setObjectName("noteContent")
         self.globalVLayout.addWidget(self.noteContent)
         
-        # ---
         
+        # -- obsługa zamykania        
         self.closeButton.setShortcut(QtGui.QApplication.translate("Note", "Ctrl+Q", None, QtGui.QApplication.UnicodeUTF8))
         self.closeButton.clicked.connect(self.closeNote)
 
 
+        # -- ustawienie treści po
         self.setMessage(message)
-                
-#     def paintEvent(self, *args, **kwargs):
-#         painter = QPainter(self)
-# #         self.paintBackground(painter)
     
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -170,13 +189,10 @@ class Note(QWidget):
         s = self.__message__.state
         if s == MsgState.GUI:
             self.sendButton.show()
-#             self.sendButton.setText("Send")
             self.noteContent.setReadOnly(False)
         elif s == MsgState.TO_SEND:
             self.sendButton.show()
             self.sendButton.setDisabled(True)
-            # TODO: może być, ale zwiększa rozmiar notatki
-#             self.sendButton.setText("Sending...")
             self.noteContent.setReadOnly(True)
         elif s == MsgState.DELETED:
             self.close()
@@ -196,8 +212,8 @@ class Note(QWidget):
         self.fromData.setText(message.sender)
         self.toData.setText(', '.join(message.recipients))
         # TODO: przyciąć daty do minut
-        self.dateData.setText(str(message.create_date))
-        self.validData.setText(str(message.expire_date))
+        self.dateData.setText(message.create_date.strftime(DATETIME_FORMAT))
+        self.validData.setText(message.expire_date.strftime(DATETIME_FORMAT))
         self.noteContent.setHtml(message.content)
         
         self.updateMessageState()
@@ -219,14 +235,47 @@ class Note(QWidget):
         self.setMessageState(MsgState.DELETED)
         # TODO: do tego można zrobić inną metodę przesyłającą tylko nowy stan...
         self.mainGui.client.modMsg(self.__message__)
+    
+    @Slot()
+    def toggleDatesWidget(self, visibility):
+        '''dla widgetu z datami - przełączanie widoczności'''
+        if visibility:
+            self.datesWidget.show()
+        else:
+            self.datesWidget.hide()
 
 class SolidNote(Note):
     def __init__(self, message=None, parent=None):
         super(SolidNote, self).__init__(message, parent)
-        self.setStyleSheet('''QWidget#Note {
-        background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, 
-            stop:0 rgba(249, 247, 105, 255), stop:1 rgba(232, 202, 33, 255));
-        };''')
+        self.setStyleSheet('''
+        QWidget#note {
+            background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, 
+                stop:0 rgba(249, 247, 105, 255), stop:1 rgba(232, 202, 33, 255));
+        }
+        
+        QPushButton {
+            padding: 4px;
+            border-style: solid;
+            background-color: rgba(255, 255, 255, 80);
+            border-radius: 3px;
+        }
+        
+        QPushButton:hover {
+            background-color: rgba(255, 255, 255, 120);
+        }
+        
+        QPushButton:pressed {
+            background-color: rgba(0, 0, 0, 120);
+        }
+        
+        QPushButton:checked {
+            background-color: rgba(0, 0, 0, 80);
+        }
+        
+        QTextBrowser#noteContent {
+            background-color: rgba(255, 255, 255, 80);
+        }
+        ''')
         # TODO: zmiana kolorów
             
 #     def paintBackground(self, painter):
@@ -281,7 +330,7 @@ class TrayIcon(QSystemTrayIcon):
         
         self.mainGui = mainGui
         
-        icon = QIcon('icon.png')
+        icon = QIcon(get_image('icon.png'))
         self.setIcon(icon)
         self.activated.connect(self.handleActivation)
         self.show()
@@ -438,7 +487,7 @@ class MainGui(QObject):
         # do domyslnej daty waznosci mozna wykorzystac MessageFactory, pozniej mozemy podpiac do fabryki wstrzykiwanie domyslnych ustawien
         messageFactory = MessageFactory()
         messageFactory.set_sender(self.userName)
-        messageFactory.set_recipients(['piotrek', 'marek'])
+        messageFactory.set_recipients(['kowalski'])
         messageFactory.set_expiredate_policy(MessageFactory.POLICY_EXPIREDATE_DAYS)
         messageFactory.set_days_to_expire(31)
         messageFactory.set_state(MsgState.GUI)

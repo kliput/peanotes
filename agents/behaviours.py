@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import spade.Behaviour
-import serializer
+from core import serializer
 import sys
 import traceback
-from message_factory import MsgState
+from core.message_factory import MsgState
 from spade.Behaviour import OneShotBehaviour
 # Default behaviour
 class DefaultBehavior(spade.Behaviour.Behaviour):
