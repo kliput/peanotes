@@ -1,0 +1,31 @@
+QWidget#note {
+    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, 
+    	stop:0 rgba(249, 247, 105, 255), stop:1 rgba(232, 202, 33, 255));
+}
+
+UserEntry, QPushButton {
+    padding: 4px;
+    border-style: solid;
+    background-color: rgba(255, 255, 255, 80);
+    border-radius: 3px;
+}
+
+UserEntry:hover, QPushButton:hover {
+    background-color: rgba(255, 255, 255, 120);
+}
+
+UserEntry:pressed, QPushButton:pressed {
+    background-color: rgba(0, 0, 0, 120);
+}
+
+UserEntry:checked, QPushButton:checked {
+    background-color: rgba(0, 0, 0, 80);
+}
+
+UserEntry:hover:checked, QPushButton:hover:checked {
+	background-color: rgba(0, 0, 0, 40);
+}
+
+QTextBrowser#noteContent {
+    background-color: rgba(255, 255, 255, 80);
+}

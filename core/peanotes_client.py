@@ -9,6 +9,14 @@ from agents import behaviours
 
 from agents.client_agent import ClientAgent
 
+import re
+
+RE_JID = re.compile(r'(.*)@(.*)')
+
+def inner_name(jid):
+    '''Przetwórz JID na nazwę użytkownika'''
+    return RE_JID.match(jid).group(1)
+
 class LoginState(object):
     OK = 1
     FAIL = 2
@@ -27,6 +35,8 @@ class PeanotesClient(QObject):
         
         self.jid = jid
         self.password = password
+        
+        self.user_name = inner_name(self.jid)
         
         self.__box__ = {}
             

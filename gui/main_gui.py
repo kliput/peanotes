@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import pickle, sys, datetime
+import os, pickle, sys, datetime
 
 from core.message_factory import MsgState, Message, MessageFactory
 import uuid
@@ -10,319 +10,11 @@ from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
 
-import gui # self import for module path
+from gui.notes import SolidNote
+from gui.utils import pea_app
 
-import os
-IMAGES_PATH = "%s/images" % os.path.dirname(gui.__file__)
-
-DATETIME_FORMAT = '%d-%m-%Y, %H:%M'
 
 trUtf8 = QObject.trUtf8
-
-def get_image(file_name):
-    return "%s/%s" % (IMAGES_PATH, file_name)
-
-
-class Note(QWidget):
-    
-    def __init__(self, message, mainGui, parent=None):
-        super(Note, self).__init__(parent)
-        
-        self.mainGui = mainGui
-        
-        self.NOTE_WIDTH = 240
-        self.NOTE_HEIGHT = 240
-        
-        self.resize(self.NOTE_WIDTH, self.NOTE_HEIGHT)
-        
-        self.setObjectName("note")
-        
-        self.drag = False # czy karteczka jest w trakcie przenoszenia?
-        self.dragPos = QPoint() # pozycja rozpoczecia przenoszenia
-         
-        assert message
-         
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
-        
-        
-        # -- główne layouty --
-                
-        self.globalVLayout = QtGui.QVBoxLayout(self)
-        self.globalVLayout.setObjectName("globalVLayout")
-        
-        self.upperHLayout = QtGui.QHBoxLayout()
-        self.upperHLayout.setObjectName("upperHLayout")
-        self.globalVLayout.addLayout(self.upperHLayout)
-        
-        self.fromToForm = QtGui.QFormLayout()
-        self.upperHLayout.addLayout(self.fromToForm)
-        
-        self.upperButtonsLayout = QtGui.QGridLayout()
-        self.upperHLayout.addLayout(self.upperButtonsLayout)
-        
-        # -- layout z nadawcą i adresatami --
-        self.fromToForm.setSizeConstraint(QtGui.QLayout.SetFixedSize)
-        self.fromToForm.setFieldGrowthPolicy(QtGui.QFormLayout.ExpandingFieldsGrow)
-        self.fromToForm.setObjectName("fromToForm")
-        self.fromLabel = QtGui.QLabel("From:", self)
-        self.fromLabel.setObjectName("fromLabel")
-        self.fromToForm.setWidget(0, QtGui.QFormLayout.LabelRole, self.fromLabel)
-        self.fromData = QtGui.QLabel(self)
-        self.fromData.setObjectName("fromData")
-        self.fromToForm.setWidget(0, QtGui.QFormLayout.FieldRole, self.fromData)
-        self.toLabel = QtGui.QLabel("To:", self)
-        self.toLabel.setObjectName("toLabel")
-        self.fromToForm.setWidget(1, QtGui.QFormLayout.LabelRole, self.toLabel)
-        self.toData = QtGui.QLabel(self)
-        self.toData.setObjectName("toData")
-        self.fromToForm.setWidget(1, QtGui.QFormLayout.FieldRole, self.toData)
-
-        
-        # -- przyciski w prawym górnym rogu
-        
-        # -- przycisk wysłania --        
-        self.sendButton = QPushButton(u"&Send", self)
-        self.sendButton.setObjectName("sendButton")
-        sendIcon = QtGui.QIcon()
-        sendIcon.addPixmap(QtGui.QPixmap(get_image("send.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.sendButton.setIcon(sendIcon)
-        self.sendButton.clicked.connect(self.sendMessage)
-        sendSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-        self.sendButton.setSizePolicy(sendSizePolicy)
-#         self.upperHLayout.addWidget(self.sendButton)
-        self.upperButtonsLayout.addWidget(self.sendButton, 0, 0)
-        
-        # -- przycisk zamykania
-        self.closeButton = QtGui.QPushButton(self)
-        self.closeButton.setObjectName("closeButton")
-        closeSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-        closeSizePolicy.setHorizontalStretch(0)
-        closeSizePolicy.setVerticalStretch(0)
-        closeSizePolicy.setHeightForWidth(self.closeButton.sizePolicy().hasHeightForWidth())
-        self.closeButton.setSizePolicy(closeSizePolicy)
-        closeIcon = QtGui.QIcon()
-        closeIcon.addPixmap(QtGui.QPixmap(get_image("close.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.closeButton.setIcon(closeIcon)
-#         self.upperHLayout.addWidget(self.closeButton)
-        self.upperButtonsLayout.addWidget(self.closeButton, 0, 1)
-        
-        # -- przycisk do dat
-        self.datesButton = QtGui.QPushButton(self)
-        self.datesButton.setCheckable(True)
-        self.datesButton.setObjectName("datesButton")
-        closeSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-        closeSizePolicy.setHorizontalStretch(0)
-        closeSizePolicy.setVerticalStretch(0)
-        closeSizePolicy.setHeightForWidth(self.datesButton.sizePolicy().hasHeightForWidth())
-        self.datesButton.setSizePolicy(closeSizePolicy)
-        closeIcon = QtGui.QIcon()
-        closeIcon.addPixmap(QtGui.QPixmap(get_image("calendar.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.datesButton.setIcon(closeIcon)
-        self.upperButtonsLayout.addWidget(self.datesButton, 1, 1)
-
-        # -- linia oddzielająca nagłówek od treści
-        self.line = QtGui.QFrame(self)
-        self.line.setFrameShape(QtGui.QFrame.HLine)
-        self.line.setFrameShadow(QtGui.QFrame.Sunken)
-        self.line.setObjectName("line")
-        self.globalVLayout.addWidget(self.line)
-
-        # -- DATES --
-
-        # TODO: zmniejszyć czcionkę?
-        self.datesForm = QtGui.QFormLayout()
-        self.datesForm.setObjectName("datesForm")
-        self.dateLabel = QtGui.QLabel("Date:", self)
-        self.dateLabel.setObjectName("dateLabel")
-        self.datesForm.setWidget(0, QtGui.QFormLayout.LabelRole, self.dateLabel)
-        self.validLabel = QtGui.QLabel("Valid till:", self)
-        self.validLabel.setObjectName("validLabel")
-        self.datesForm.setWidget(1, QtGui.QFormLayout.LabelRole, self.validLabel)
-        self.dateData = QtGui.QLabel(self)
-        self.dateData.setObjectName("dateData")
-        self.datesForm.setWidget(0, QtGui.QFormLayout.FieldRole, self.dateData)
-        self.validData = QtGui.QLabel(self)
-        self.validData.setObjectName("validData")
-        self.datesForm.setWidget(1, QtGui.QFormLayout.FieldRole, self.validData)
-
-        self.datesWidget = QtGui.QWidget()
-        self.datesWidget.setLayout(self.datesForm)
-        self.globalVLayout.addWidget(self.datesWidget)
-        
-        # -- obsługa chowania dat
-        self.datesWidget.hide()
-        self.datesButton.toggled.connect(self.toggleDatesWidget)
-
-        
-        # -- pole treści
-        self.noteContent = QtGui.QTextBrowser(self)
-        self.noteContent.setEnabled(True)
-        
-        self.noteContent.setFrameShape(QtGui.QFrame.NoFrame)
-        self.noteContent.setFrameShadow(QtGui.QFrame.Plain)
-        self.noteContent.setReadOnly(True)
-        self.noteContent.setObjectName("noteContent")
-        self.globalVLayout.addWidget(self.noteContent)
-        
-        
-        # -- obsługa zamykania        
-        self.closeButton.setShortcut(QtGui.QApplication.translate("Note", "Ctrl+Q", None, QtGui.QApplication.UnicodeUTF8))
-        self.closeButton.clicked.connect(self.closeNote)
-
-
-        # -- ustawienie treści po
-        self.setMessage(message)
-    
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.drag = True
-            self.dragPos = event.globalPos() - self.pos()
-    
-    def mouseReleaseEvent(self, event):
-        self.drag = False
-    
-    def mouseMoveEvent(self, event):
-        if self.drag:
-            self.move(event.globalPos() - self.dragPos)
-    
-    def updateMessageState(self):
-        s = self.__message__.state
-        if s == MsgState.GUI:
-            self.sendButton.show()
-            self.noteContent.setReadOnly(False)
-        elif s == MsgState.TO_SEND:
-            self.sendButton.show()
-            self.sendButton.setDisabled(True)
-            self.noteContent.setReadOnly(True)
-        elif s == MsgState.DELETED:
-            self.close()
-        else:
-            self.sendButton.hide()
-            self.noteContent.setReadOnly(True)
-    
-    def setMessageState(self, state):
-        self.__message__.state = state
-        self.updateMessageState()
-    
-    def setMessage(self, message):
-        assert message
-        self.__message__ = message
-        
-        # TODO: dodać trzykropek jak się nie mieści
-        self.fromData.setText(message.sender)
-        self.toData.setText(', '.join(message.recipients))
-        # TODO: przyciąć daty do minut
-        self.dateData.setText(message.create_date.strftime(DATETIME_FORMAT))
-        self.validData.setText(message.expire_date.strftime(DATETIME_FORMAT))
-        self.noteContent.setHtml(message.content)
-        
-        self.updateMessageState()
-    
-    def sendMessage(self):
-        # tylko dla całkiem nowych wiadomości (w sumie tylko powinny być)
-        if self.__message__.state == MsgState.GUI:
-            self.__message__.content = self.noteContent.toPlainText()
-            self.setMessageState(MsgState.TO_SEND)
-        self.mainGui.client.addMsg(self.__message__)
-    
-    def getMessage(self):
-        return self.__message__
-    
-    @Slot()
-    def closeNote(self):
-        '''dla przycisku zamykania - tylko ustawia stan
-        reszta jest obsługiwana przez zmianę stanu'''
-        self.setMessageState(MsgState.DELETED)
-        # TODO: do tego można zrobić inną metodę przesyłającą tylko nowy stan...
-        self.mainGui.client.modMsg(self.__message__)
-    
-    @Slot()
-    def toggleDatesWidget(self, visibility):
-        '''dla widgetu z datami - przełączanie widoczności'''
-        if visibility:
-            self.datesWidget.show()
-        else:
-            self.datesWidget.hide()
-
-class SolidNote(Note):
-    def __init__(self, message=None, parent=None):
-        super(SolidNote, self).__init__(message, parent)
-        self.setStyleSheet('''
-        QWidget#note {
-            background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, 
-                stop:0 rgba(249, 247, 105, 255), stop:1 rgba(232, 202, 33, 255));
-        }
-        
-        QPushButton {
-            padding: 4px;
-            border-style: solid;
-            background-color: rgba(255, 255, 255, 80);
-            border-radius: 3px;
-        }
-        
-        QPushButton:hover {
-            background-color: rgba(255, 255, 255, 120);
-        }
-        
-        QPushButton:pressed {
-            background-color: rgba(0, 0, 0, 120);
-        }
-        
-        QPushButton:checked {
-            background-color: rgba(0, 0, 0, 80);
-        }
-        
-        QTextBrowser#noteContent {
-            background-color: rgba(255, 255, 255, 80);
-        }
-        ''')
-        # TODO: zmiana kolorów
-            
-#     def paintBackground(self, painter):
-#         painter.setBrush(QColor('#F8CA00')) # TODO: konfiguracja koloru
-#         painter.drawRect(QRectF(0, 0, self.NOTE_WIDTH-1, self.NOTE_HEIGHT-1))
-        
-# class TransculentNote(Note):
-#     'not done yet'
-#     def __init__(self, message=None, parent=None):
-#         super(TransculentNote, self).__init__(message, parent)
-#         self.setAttribute(Qt.WA_TranslucentBackground)
-#         self.BACKGROUND_IMAGE = QImage('back.png') 
-#     
-#     def paintBackground(self, painter):
-#         painter.drawImage(QRectF(0, 0, self.NOTE_WIDTH, self.NOTE_HEIGHT),
-#                   self.BACKGROUND_IMAGE, QRectF(0, 0, self.NOTE_WIDTH, self.NOTE_HEIGHT))
-
-# class LoginWindow(QWidget):
-#     # naciśnięcie OK - wysłanie danych logowania
-#     formSubmitted = Signal((str, str))
-#     
-#     def __init__(self, mainGui, parent=None):
-#         super(LoginWindow, self).__init__(parent)
-#         
-#         self.mainGui = mainGui
-#         
-#         self.setWindowTitle("Login")
-#         self.setLayout(QFormLayout())
-#         
-#         self.loginEdit = QLineEdit()
-#         self.passwordEdit = QLineEdit()
-#         self.submitButton = QPushButton('OK')
-#         self.cancelButton = QPushButton('Cancel')
-# 
-#         self.submitButton.clicked.connect(self.handleOKButton())
-# 
-#         self.layout().addRow('Login:', self.loginEdit)
-#         self.layout().addRow('Password:', self.passwordEdit)
-#         self.buttonsLayout = QHBoxLayout()
-#         self.buttonsLayout.addWidget(self.submitButton)
-#         self.buttonsLayout.addWidget(self.cancelButton)
-#         self.layout().addLayout(self.buttonsLayout)
-# 
-#     @Slot
-#     def handleOKButton(self):
-#         self.formSubmitted.emit(self.loginEdit.text(), self.passwordEdit.text())
-#         # TODO: efekt ładowania - oczekiwanie na odpowiedź mainGui
 
 class TrayIcon(QSystemTrayIcon):
     def __init__(self, mainGui):
@@ -330,7 +22,7 @@ class TrayIcon(QSystemTrayIcon):
         
         self.mainGui = mainGui
         
-        icon = QIcon(get_image('icon.png'))
+        icon = pea_app().tray_icon
         self.setIcon(icon)
         self.activated.connect(self.handleActivation)
         self.show()
@@ -412,13 +104,12 @@ class MainGui(QObject):
         
         self.handleUpdateMessageBox()
     
-        # TODO: nazwa użytkownika
-        self.userName = client.jid.split('@')[0]
-        print 'username: %s' % self.userName
-    
         self.client.boxUpdated.connect(self.handleUpdateMessageBox)
         
-    
+        
+        # TODO:
+        self.__knownUsersSet__ = set(['kuba', 'marek', 'piotrek'])
+        
 #     @Slot(str, str)
 #     def handleLoginForm(self, user, password):
 #         self.client.login(user, password)
@@ -431,6 +122,16 @@ class MainGui(QObject):
 #             self.handleUpdateMessageBox()
 #         else:
 #             print "login failed!"
+    
+    def userName(self):
+        return self.client.user_name
+    
+    # TODO:
+    def knownUsers(self):
+        return list(self.__knownUsersSet__)
+    
+    def addKnownUser(self, username):
+        self.__knownUsersSet__.add(username)
     
     @Slot()
     def handleUpdateMessageBox(self):
@@ -486,14 +187,15 @@ class MainGui(QObject):
         # TODO: domyślna data ważności, możliwość zmiany daty ważności
         # do domyslnej daty waznosci mozna wykorzystac MessageFactory, pozniej mozemy podpiac do fabryki wstrzykiwanie domyslnych ustawien
         messageFactory = MessageFactory()
-        messageFactory.set_sender(self.userName)
-        messageFactory.set_recipients(['kowalski'])
+        messageFactory.set_sender(self.userName())
+        messageFactory.set_recipients(['beres', 'wlodarczyk']) # TODO
+#         messageFactory.set_recipients(['kowalski', 'nowak', 'liput', 'beres', 'wlodarczyk']) # TODO
         messageFactory.set_expiredate_policy(MessageFactory.POLICY_EXPIREDATE_DAYS)
-        messageFactory.set_days_to_expire(31)
+        messageFactory.set_days_to_expire(31) # TODO
         messageFactory.set_state(MsgState.GUI)
         messageFactory.set_content('')
         
-            
+        
         m = messageFactory.build()
         
         nnote = SolidNote(m, self)
