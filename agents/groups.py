@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
-
+import sets
 class Group:
 	userList = []
 	groupList = {}
@@ -133,6 +133,18 @@ class Group:
 			self.saveToFile(self.userList, self.groupList)
 		else:
 			return "Nie mozna usunac uzytkownika"
+		
+	def getUsersForGroup(self, groupName):
+		groupName = groupName.split("@")[0]
+		if groupName in self.groupList:
+			return self.groupList[groupName]
+		else:
+			return []
+	def getUsersForGroups(self, groupNames):
+		return sets.Set(user for groupName in groupNames for user in self.getUsersForGroup(groupName))
+	
+	def getUsersForGroupsAndUsers(self, groupAndUserNames):
+		return sets.Set(user.split("@")[0] for user in groupAndUserNames if user.split("@")[0] not in self.groupList).union(self.getUsersForGroups(groupAndUserNames))  
 '''
 	def test(self):
 		self.addUser('adam')
@@ -151,5 +163,8 @@ class Group:
 		print self.groupList
 '''
 if __name__ == '__main__':
-	Group()
+	g = Group()
+	print "groupList =", g.groupList
+	print g.getUsersForGroups(["grupa_3", "grupa_2", "grupa_1"])
+	print g.getUsersForGroupsAndUsers(["grupa_3", "grupa_2","jacek"])
 

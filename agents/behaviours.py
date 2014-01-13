@@ -68,9 +68,12 @@ class ServerNewMessageBehaviour(spade.Behaviour.Behaviour):
             msgNote = serializer.deserialize(msg.content)
             print "new msg arrived, =", msgNote
             self.myAgent.msgManager.add_msg_to_sender(msgNote, state=MsgState.SENT)
-            self.myAgent.msgManager.add_msg_to_users(msgNote, msgNote.recipients, state=MsgState.NEW)  
+            print msgNote.recipients
+            recipients = self.myAgent.groups.getUsersForGroupsAndUsers(msgNote.recipients)
+            self.myAgent.msgManager.add_msg_to_users(msgNote, recipients, state=MsgState.NEW)
+            #self.myAgent.msgManager.add_msg_to_users(msgNote, msgNote.recipients, state=MsgState.NEW)
             msgNote.state = MsgState.NEW
-            self.myAgent.sendMsg(msgNote, msgNote.recipients)
+            self.myAgent.sendMsg(msgNote, recipients) # TODO
         else:
             print "No msg"
             

@@ -4,6 +4,7 @@ import spade
 from core import serializer
 from behaviours import *
 from core.persistence import MessageManager
+from agents import groups
 class ServerAgent(spade.Agent.Agent):
     
  
@@ -42,6 +43,7 @@ class ServerAgent(spade.Agent.Agent):
         self.send(msg)
 
     def _setup(self):
+        self.groups = groups.Group()
         # Add the "DefaultBehavior" as the default behaviour
         self.msgManager = MessageManager()
         self.setDefaultBehaviour(DefaultBehavior())        
