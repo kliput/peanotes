@@ -7,6 +7,8 @@ from gui.ui.settings_window import Ui_PeanotesSettings
 from gui.utils import list_widget_items, pea_app
 from core.filters import AndFilter, RecepientFilter, SenderFilter, RegexFilter,\
     WordFilter
+    
+from gui.utils import STYLES
  
 class SelectRecipientsWindow(QWidget):
     def __init__(self, note):
@@ -112,6 +114,8 @@ class SettingsWindow(QWidget):
         self.ui.removeButton.clicked.connect(self.removeFilter)
         
         self.ui.saveButton.clicked.connect(self.updateFilter)
+        
+        self.ui.colorBox.addItems(STYLES.keys())
     
     def init(self):
         pass
@@ -121,7 +125,7 @@ class SettingsWindow(QWidget):
         name = 'Filter #%d' % self.iter
         self.iter += 1
         
-        self.filters[name] = AndFilter([]) # pusty - matchuje wszystko
+        self.filters[name] = (AndFilter([]), 'yellow') # pusty - matchuje wszystko
         self.ui.filtersList.addItem(name)
     
     @Slot()
@@ -142,7 +146,7 @@ class SettingsWindow(QWidget):
         if content:
             tmp_fs.append(WordFilter(content))
                 
-        self.filters[item_key] = AndFilter(tmp_fs)
+        self.filters[item_key] = (AndFilter(tmp_fs), self.ui.colorBox.currentText())
         
         self.mainGui.updateNotes()
     

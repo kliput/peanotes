@@ -257,6 +257,7 @@ class Note(QtGui.QWidget):
             self.__message__.recipients = self.recipients()
             self.setMessageState(MsgState.TO_SEND)
         self.mainGui.client.addMsg(self.__message__)
+        self.mainGui.client.updateNotes()
     
     def getMessage(self):
         return self.__message__

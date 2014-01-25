@@ -15,6 +15,7 @@ from gui.utils import pea_app
 from gui.windows import SettingsWindow
 from gui.utils import STYLES
 from random import shuffle
+from core.filters import FilterQueue
 
 trUtf8 = QObject.trUtf8
 
@@ -219,8 +220,15 @@ class MainGui(QObject):
 #         self.handleUpdateMessageBox()
     
     def updateNotes(self):
+        fq = FilterQueue()
+        for f in self.settingsWindow.filters.values():
+            fq.add_filter(f[0], f[1]) # FIXME: !
+        
         for note in self.allNotes.values():
-            style = random.choice(STYLES.values())
+            try:
+                style = STYLES[fq.get_first_matching(note.__message__)]
+            except KeyError:
+                style = STYLES['yellow']
             note.setStyleSheet(style)
         
 #     def loadSettings(self):
