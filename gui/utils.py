@@ -23,3 +23,20 @@ def trunc_str(text, max_chars):
 with open("%s/style.css" % os.path.dirname(gui.__file__)) as f:
     GLOBAL_STYLESHEET = f.read()
     
+def color_style(nw_color, se_color):
+    return GLOBAL_STYLESHEET + '''
+        QWidget#note {
+            background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, 
+                stop:0 %s, stop:1 %s);
+        }''' % (nw_color, se_color)
+
+STYLES = {    
+    'yellow': color_style('#E4E360', '#E8CA21'),
+    'blue': color_style('#64DCF9', '#2399EC'),
+    'green': color_style('#C0FF5F', '#6BCD13'),
+    'orange': color_style('#F9BC5F', '#EC9222'),
+    'pink': color_style('#FABFF8', '#F792E2'),
+    'red': color_style('#FF7979', '#F45454'),
+    'white': color_style('#EDEDED', '#E0E0E0')
+}
+

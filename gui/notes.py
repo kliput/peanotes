@@ -6,7 +6,7 @@ from PySide.QtCore import QPoint, Qt, Slot, Signal
 
 from core.message_factory import MsgState
 from gui.widgets import UserEntry, ToolBar, UsersList
-from gui.utils import GLOBAL_STYLESHEET
+from gui.utils import STYLES
 from gui.windows import SelectRecipientsWindow
 
 from gui.utils import pea_app, trunc_str
@@ -23,8 +23,6 @@ class Note(QtGui.QWidget):
         
         self.NOTE_WIDTH = 240
         self.NOTE_HEIGHT = 240
-        
-        self.setStyleSheet(GLOBAL_STYLESHEET)
         
         self.setFixedSize(self.NOTE_WIDTH, self.NOTE_HEIGHT)
         
@@ -182,6 +180,7 @@ class Note(QtGui.QWidget):
 
         # -- ustawienie treści
         self.setMessage(message)
+    
     
     def setRecipients(self, recipients):
         '''Ustawia listę nadawców

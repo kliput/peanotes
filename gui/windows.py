@@ -3,7 +3,10 @@
 from PySide.QtGui import QWidget 
 from PySide.QtCore import Slot, Qt
 from gui.ui.add_user_window import Ui_AddUserWindow
+from gui.ui.settings_window import Ui_PeanotesSettings
 from gui.utils import list_widget_items, pea_app
+from core.filters import AndFilter, RecepientFilter, SenderFilter, RegexFilter,\
+    WordFilter
  
 class SelectRecipientsWindow(QWidget):
     def __init__(self, note):
@@ -90,4 +93,64 @@ class SelectRecipientsWindow(QWidget):
                 rlist.addItem(uu)
             self.ui.unknownUserEdit.clear()
             self.note.addKnownUser(uu)
+ 
+class SettingsWindow(QWidget):    
+    def __init__(self, mainGui):
+        '''
+        Argument parent powinien być typu MainGui
+        '''
+        super(SettingsWindow, self).__init__(None)
+        self.ui = Ui_PeanotesSettings()
+        self.ui.setupUi(self)
+        self.mainGui = mainGui
+        self.setWindowIcon(pea_app().tray_icon)
+    
+        self.filters = {}
+        self.iter = 1
+        
+        self.ui.addButton.clicked.connect(self.addFilter)
+        self.ui.removeButton.clicked.connect(self.removeFilter)
+        
+        self.ui.saveButton.clicked.connect(self.updateFilter)
+    
+    def init(self):
+        pass
+    
+    @Slot()
+    def addFilter(self):
+        name = 'Filter #%d' % self.iter
+        self.iter += 1
+        
+        self.filters[name] = AndFilter([]) # pusty - matchuje wszystko
+        self.ui.filtersList.addItem(name)
+    
+    @Slot()
+    def updateFilter(self):
+        item_key = self.ui.filtersList.selectedItems()[0].text()
+        
+        # budowa nowego filtra
+        sender = self.ui.fromEdit.text()
+        recipient = self.ui.toEdit.text()
+        content = self.ui.containsEdit.toPlainText()
+        
+        tmp_fs = []
+        
+        if sender:
+            tmp_fs.append(SenderFilter(sender))
+        if recipient:
+            tmp_fs.append(RecepientFilter(recipient))
+        if content:
+            tmp_fs.append(WordFilter(content))
+                
+        self.filters[item_key] = AndFilter(tmp_fs)
+        
+        self.mainGui.updateNotes()
+    
+    @Slot()
+    def removeFilter(self):
+        for item in self.ui.filtersList.selectedItems():
+            self.ui.filtersList.takeItem(self.ui.filtersList.row(item))
+    
+    def hideEvent(self, *args, **kwargs):
+        self.mainGui.updateNotes()
         

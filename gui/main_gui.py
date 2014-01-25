@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import os, pickle, sys, datetime
+import os, pickle, sys, datetime, random
 
 from core.message_factory import MsgState, Message, MessageFactory
 import uuid
@@ -12,7 +12,9 @@ from PySide.QtGui import *
 
 from gui.notes import SolidNote
 from gui.utils import pea_app
-
+from gui.windows import SettingsWindow
+from gui.utils import STYLES
+from random import shuffle
 
 trUtf8 = QObject.trUtf8
 
@@ -106,9 +108,13 @@ class MainGui(QObject):
     
         self.client.boxUpdated.connect(self.handleUpdateMessageBox)
         
+        self.settingsWindow = SettingsWindow(self)
+        self.settingsWindow.hide()
         
         # TODO:
         self.__knownUsersSet__ = set(['kuba', 'marek', 'piotrek'])
+        
+        self.updateNotes()
         
 #     @Slot(str, str)
 #     def handleLoginForm(self, user, password):
@@ -167,8 +173,7 @@ class MainGui(QObject):
         
     @Slot()
     def showSettings(self):
-        # TODO: settings window
-        pass
+        self.settingsWindow.show()
     
     @Slot()
     def hideNotes(self):
@@ -181,6 +186,8 @@ class MainGui(QObject):
             note.show()
             note.raise_()
             note.activateWindow()
+        
+        self.updateNotes()
 
     @Slot()
     def newNote(self):
@@ -204,11 +211,17 @@ class MainGui(QObject):
         # HACK TODO
         self.handleUpdateMessageBox()
         
+        self.updateNotes()
+        
         # TODO: niepotrzebne, lepiej jakiś refresh
         #self.client.addMsg(m) # TODO: addMsg emituje zmianę zawartości
         
 #         self.handleUpdateMessageBox()
     
+    def updateNotes(self):
+        for note in self.allNotes.values():
+            style = random.choice(STYLES.values())
+            note.setStyleSheet(style)
         
 #     def loadSettings(self):
 #         'TODO: dodać domyślne'        

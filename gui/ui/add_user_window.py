@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'add_user_window.ui'
 #
-# Created: Sun Dec 22 13:35:44 2013
+# Created: Sat Jan 25 23:24:27 2014
 #      by: pyside-uic 0.2.13 running on PySide 1.1.0
 #
 # WARNING! All changes made in this file will be lost!
