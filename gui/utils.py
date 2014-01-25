@@ -17,6 +17,9 @@ def list_widget_items(list_widget):
     'Pomocniczo dla QListWidget: zwraca listę itemów'
     return [list_widget.item(i) for i in range(list_widget.count())]
 
+def trunc_str(text, max_chars):
+    return len(text) > max_chars and text[:max_chars-2] + "..." or text
+
 with open("%s/style.css" % os.path.dirname(gui.__file__)) as f:
     GLOBAL_STYLESHEET = f.read()
     

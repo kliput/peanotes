@@ -5,3 +5,6 @@ server_userdata.pkl
 *.pyc
 user_data
 .config
+.directory
+*~
+

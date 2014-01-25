@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from PySide import QtGui
-from PySide.QtGui import QWidget, QPushButton
+from PySide.QtGui import QWidget, QPushButton, QLabel
 from PySide.QtCore import QPoint, Qt, Slot, Signal
 
 from core.message_factory import MsgState
 from gui.widgets import UserEntry, ToolBar, UsersList
 from gui.utils import GLOBAL_STYLESHEET
 from gui.windows import SelectRecipientsWindow
+
+from gui.utils import pea_app, trunc_str
 
 DATETIME_FORMAT = '%d-%m-%Y, %H:%M'
 USERS_LIST_WIDTH = 200
@@ -24,7 +26,7 @@ class Note(QtGui.QWidget):
         
         self.setStyleSheet(GLOBAL_STYLESHEET)
         
-        self.resize(self.NOTE_WIDTH, self.NOTE_HEIGHT)
+        self.setFixedSize(self.NOTE_WIDTH, self.NOTE_HEIGHT)
         
         self.setObjectName("note")
         
@@ -34,17 +36,14 @@ class Note(QtGui.QWidget):
         assert message
          
         self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowTitle("Note") # FIXME
         
         
         # -- główne layouty --
                 
         self.globalVLayout = QtGui.QVBoxLayout(self)
         self.globalVLayout.setObjectName("globalVLayout")
-        
-        self.toolbar = ToolBar(self)
-        self.toolbar.sendButton.clicked.connect(self.sendMessage)
-        self.globalVLayout.addWidget(self.toolbar)
-        
+                
         self.upperHLayout = QtGui.QHBoxLayout()
         self.upperHLayout.setObjectName("upperHLayout")
         self.globalVLayout.addLayout(self.upperHLayout)
@@ -61,22 +60,69 @@ class Note(QtGui.QWidget):
         self.fromLabel.setObjectName("fromLabel")
         self.fromToForm.setWidget(0, QtGui.QFormLayout.LabelRole, self.fromLabel)
         
-        self.senderUserEntry = UserEntry('')
-        self.senderUserEntry.setObjectName("senderUserEntry")
-        self.fromToForm.setWidget(0, QtGui.QFormLayout.FieldRole, self.senderUserEntry)
+        self.fromToFormUpRight = QtGui.QHBoxLayout()
+        self.fromToForm.setLayout(0, QtGui.QFormLayout.FieldRole, self.fromToFormUpRight)
         
         self.toLabel = QtGui.QLabel("To:", self)
         self.toLabel.setObjectName("toLabel")
         self.fromToForm.setWidget(1, QtGui.QFormLayout.LabelRole, self.toLabel)
         
-#         self.recipientsBox = QtGui.QWidget(self)
-#         self.recipientsBox.setLayout(QtGui.QHBoxLayout(self.recipientsBox))
-#         self.recipientsBox.setObjectName("receiversBox")
-#         self.fromToForm.setWidget(1, QtGui.QFormLayout.FieldRole, self.recipientsBox)
+        self.fromToFormDownRight = QtGui.QHBoxLayout()
+        self.fromToForm.setLayout(1, QtGui.QFormLayout.FieldRole, self.fromToFormDownRight)
         
-        self.recipientsBox = UsersList(self)
-        self.fromToForm.setWidget(1, QtGui.QFormLayout.FieldRole, self.recipientsBox)
+        
+        # -- przyciski funkcyjne --        
+        iconButtonPolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        iconButtonPolicy.setHorizontalStretch(0)
+        iconButtonPolicy.setVerticalStretch(0)
+                
+        # -- przycisk wysłania --        
+        self.sendButton = QPushButton(u"&Send")
+        self.sendButton.setObjectName("sendButton")
+        self.sendButton.setIcon(pea_app().send_icon)
+        sendSizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        self.sendButton.setSizePolicy(sendSizePolicy)
+        
+        # -- przycisk dodawania
+        self.addButton = QtGui.QPushButton(self)
+        self.addButton.setObjectName("addButton")
+        self.addButton.setSizePolicy(iconButtonPolicy)
+        self.addButton.setIcon(pea_app().add_icon)
+        
+        self.sendButton.clicked.connect(self.sendMessage)
+        
+        # -- przycisk do dat
+        self.datesButton = QtGui.QPushButton(self)
+        self.datesButton.setCheckable(True)
+        self.datesButton.setObjectName("datesButton")
+        self.datesButton.setSizePolicy(iconButtonPolicy)
+        self.datesButton.setIcon(pea_app().calendar_icon)
+        
+        # -- przycisk zamykania
+        self.closeButton = QtGui.QPushButton(self)
+        self.closeButton.setObjectName("closeButton")
+        self.closeButton.setSizePolicy(iconButtonPolicy)
+        self.closeButton.setIcon(pea_app().close_icon)
+        
+        
+        
+        # --- górny prawy ---
+        self.senderUserEntry = QtGui.QLabel('')
+        self.senderUserEntry.setObjectName("senderUserEntry")
+        self.fromToFormUpRight.addWidget(self.senderUserEntry)
+        self.fromToFormUpRight.addStretch()
+        self.fromToFormUpRight.addWidget(self.sendButton)
+        self.fromToFormUpRight.addWidget(self.datesButton)
+        self.fromToFormUpRight.addWidget(self.closeButton)
+        # ---
 
+        # --- dolny prawy ---
+        self.recipientsBox = QtGui.QLabel()
+        self.fromToFormDownRight.addWidget(self.recipientsBox)
+        self.fromToFormDownRight.addStretch()
+        self.fromToFormDownRight.addWidget(self.addButton)
+        # ---
+        
 
         # -- linia oddzielająca nagłówek od treści
         self.line = QtGui.QFrame(self)
@@ -109,11 +155,11 @@ class Note(QtGui.QWidget):
         
         # -- obsługa chowania dat
         self.datesWidget.hide()
-        self.toolbar.datesButton.toggled.connect(self.toggleDatesWidget)
+        self.datesButton.toggled.connect(self.toggleDatesWidget)
         
         # TODO:
         # -- obsługa dodawania adresata
-        self.toolbar.addButton.clicked.connect(self.selectRecipients)
+        self.addButton.clicked.connect(self.selectRecipients)
 
         
         # -- pole treści
@@ -128,8 +174,8 @@ class Note(QtGui.QWidget):
         
         
         # -- obsługa zamykania        
-        self.toolbar.closeButton.setShortcut(QtGui.QApplication.translate("note", "Ctrl+Q", None, QtGui.QApplication.UnicodeUTF8))
-        self.toolbar.closeButton.clicked.connect(self.closeNote)
+        self.closeButton.setShortcut(QtGui.QApplication.translate("note", "Ctrl+Q", None, QtGui.QApplication.UnicodeUTF8))
+        self.closeButton.clicked.connect(self.closeNote)
 
         # -- przyszłe okno wyboru adresatów 
         self.selectRecipentsWindow = None
@@ -140,12 +186,16 @@ class Note(QtGui.QWidget):
     def setRecipients(self, recipients):
         '''Ustawia listę nadawców
         Argument recipients: lista str [odbiorca1, odbiorca2, ...]'''
-        self.recipientsBox.setUsers(recipients)
+        self.recipients_ = recipients
+                
+        rec_join = ', '.join(recipients)
+        self.recipientsBox.setText(trunc_str(rec_join, 21))
+        self.recipientsBox.setToolTip(rec_join)
     
     def setSender(self, sender):
         '''Ustawia wysyłającego
         Argument sender: str nadawca'''
-        self.senderUserEntry.setText(sender)
+        self.sender_ = sender
     
     def mousePressEvent(self, event):
         self.raise_()
@@ -162,18 +212,27 @@ class Note(QtGui.QWidget):
     
     def updateMessageState(self):
         s = self.__message__.state
+        send_button = False
         if s == MsgState.GUI:
-            self.toolbar.sendButton.show()
             self.noteContent.setReadOnly(False)
+            send_button = True
         elif s == MsgState.TO_SEND:
-            self.toolbar.sendButton.show()
-            self.toolbar.sendButton.setDisabled(True)
+            send_button = True
+            self.sendButton.setDisabled(True)
             self.noteContent.setReadOnly(True)
         elif s == MsgState.DELETED:
             self.close()
         else:
-            self.toolbar.sendButton.hide()
+            self.sendButton.hide()
             self.noteContent.setReadOnly(True)
+            
+        if send_button:
+            self.sendButton.show()
+            self.senderUserEntry.setText(trunc_str(self.sender(), 6))
+        else:
+            self.senderUserEntry.setText(trunc_str(self.sender(), 16))
+            
+        self.senderUserEntry.setToolTip(self.sender())
     
     def setMessageState(self, state):
         self.__message__.state = state
@@ -183,7 +242,6 @@ class Note(QtGui.QWidget):
         assert message
         self.__message__ = message
         
-        # TODO: dodać trzykropek jak się nie mieści
         self.setSender(message.sender)
         self.setRecipients(message.recipients)
         self.dateData.setText(message.create_date.strftime(DATETIME_FORMAT))
@@ -205,11 +263,11 @@ class Note(QtGui.QWidget):
         return self.__message__
     
     def sender(self):
-        return self.mainGui.userName()
+        return self.sender_
     
     def recipients(self):
         '''Zwraca listę str adresatów'''
-        return self.recipientsBox.users()
+        return self.recipients_
     
     def knownUsers(self):
         '''Zwraca listę znanych użytkowników'''

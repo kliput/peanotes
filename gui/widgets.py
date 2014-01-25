@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PySide import QtGui
-from PySide.QtGui import QPushButton, QHBoxLayout, QWidget
+from PySide.QtGui import QPushButton, QHBoxLayout, QWidget, QLabel
 
 from gui.utils import pea_app
 
@@ -59,23 +59,18 @@ class UsersList(QWidget):
     def __init__(self, parent=None):
         super(UsersList, self).__init__(parent)
         self.setLayout(QHBoxLayout(self))
-        
-    def clearUsers(self):
-        layout = self.layout()
-        for i in reversed(range(layout.count())):
-            layout.itemAt(i).widget().close()
-            layout.takeAt(i)
-    
-    def addUser(self, username):
-        self.layout().addWidget(UserEntry(username))
-        
+        self.mainLabel = QLabel("");
+        self.layout().addWidget(self.mainLabel)
+            
     def setUsers(self, username_list):
-        self.clearUsers()
-        for uname in username_list:
-            self.addUser(uname)
+        users_str = ', '.join(username_list)
+        if len(users_str) > 20:
+            users_str = users_str[:20] + "..."
         
-    def users(self):
-        '''Zwraca listę str wszystkich nazw użytkowników'''
-        return [self.layout().itemAt(i).widget().userName() for i in range(self.layout().count())]
+        self.mainLabel.setText(users_str)
+        
+#     def users(self):
+#         '''Zwraca listę str wszystkich nazw użytkowników'''
+#         return [self.layout().itemAt(i).widget().userName() for i in range(self.layout().count())]
 
       

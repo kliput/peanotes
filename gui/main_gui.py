@@ -188,10 +188,9 @@ class MainGui(QObject):
         # do domyslnej daty waznosci mozna wykorzystac MessageFactory, pozniej mozemy podpiac do fabryki wstrzykiwanie domyslnych ustawien
         messageFactory = MessageFactory()
         messageFactory.set_sender(self.userName())
-        messageFactory.set_recipients(['beres', 'wlodarczyk']) # TODO
-#         messageFactory.set_recipients(['kowalski', 'nowak', 'liput', 'beres', 'wlodarczyk']) # TODO
+        messageFactory.set_recipients([])
         messageFactory.set_expiredate_policy(MessageFactory.POLICY_EXPIREDATE_DAYS)
-        messageFactory.set_days_to_expire(31) # TODO
+        messageFactory.set_days_to_expire(31)
         messageFactory.set_state(MsgState.GUI)
         messageFactory.set_content('')
         
