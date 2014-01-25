@@ -3,7 +3,7 @@
 from PySide.QtGui import QWidget 
 from PySide.QtCore import Slot, Qt
 from gui.ui.add_user_window import Ui_AddUserWindow
-from gui.utils import list_widget_items
+from gui.utils import list_widget_items, pea_app
  
 class SelectRecipientsWindow(QWidget):
     def __init__(self, note):
@@ -13,11 +13,18 @@ class SelectRecipientsWindow(QWidget):
         super(SelectRecipientsWindow, self).__init__(None)
         self.ui = Ui_AddUserWindow()
         self.ui.setupUi(self)
-        
         self.note = note
+        self.setWindowIcon(pea_app().add_icon)
+    
+    def init(self):
+        kusers = set(self.note.knownUsers())
+        rusers = set(self.note.recipients())
         
-        self.ui.knownUsersList.addItems(self.note.knownUsers())
-        self.ui.recipientsList.addItems(self.note.recipients())
+        self.ui.knownUsersList.clear()
+        self.ui.recipientsList.clear()
+        
+        self.ui.knownUsersList.addItems(list(kusers-(kusers & rusers)))
+        self.ui.recipientsList.addItems(list(rusers))
         
         self.ui.doneButton.clicked.connect(self.doneClicked)
         
@@ -26,6 +33,11 @@ class SelectRecipientsWindow(QWidget):
         self.ui.removeButton.clicked.connect(self.removeSelectedRecipients)
         self.ui.removeAllButton.clicked.connect(self.removeAllRecipients)
     
+        self.ui.addUnknownButton.clicked.connect(self.addUnknownUser)
+        self.ui.unknownUserEdit.returnPressed.connect(self.addUnknownUser)
+    
+    def showEvent(self, event):
+        self.init()
     
     def recipients(self):
         return [it.text() for it in list_widget_items(self.ui.recipientsList)]
@@ -68,4 +80,14 @@ class SelectRecipientsWindow(QWidget):
         klist.addItems([it.text() for it in itemsToMove])
         for item in itemsToMove:
             rlist.takeItem(rlist.row(item))
+    
+    @Slot() 
+    def addUnknownUser(self):
+        uu = self.ui.unknownUserEdit.text()
+        if uu and uu != '':
+            rlist = self.ui.recipientsList
+            if uu not in [it.text() for it in list_widget_items(rlist)]:
+                rlist.addItem(uu)
+            self.ui.unknownUserEdit.clear()
+            self.note.addKnownUser(uu)
         
