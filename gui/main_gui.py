@@ -14,7 +14,6 @@ from gui.notes import SolidNote
 from gui.utils import pea_app
 from gui.windows import SettingsWindow
 from gui.utils import STYLES
-from random import shuffle
 from core.filters import FilterQueue
 
 trUtf8 = QObject.trUtf8
@@ -86,6 +85,9 @@ class MainGui(QObject):
     def __init__(self, client):
         self.client = client
         
+        self.settingsWindow = SettingsWindow(self)
+        self.settingsWindow.hide()
+        
         QTextCodec.setCodecForTr(QTextCodec.codecForName("UTF-8"))
         
         # połączenia ->
@@ -108,10 +110,7 @@ class MainGui(QObject):
         self.handleUpdateMessageBox()
     
         self.client.boxUpdated.connect(self.handleUpdateMessageBox)
-        
-        self.settingsWindow = SettingsWindow(self)
-        self.settingsWindow.hide()
-        
+                
         # TODO:
         self.__knownUsersSet__ = set(['kuba', 'marek', 'piotrek'])
         
@@ -163,6 +162,8 @@ class MainGui(QObject):
                 else:
                     self.allNotes[mid].setMessageState(msg.state)
     
+        self.updateNotes() # FIXME: ...
+    
         for note in self.allNotes.values(): note.show()
     
     @Slot()
@@ -211,8 +212,6 @@ class MainGui(QObject):
         
         # HACK TODO
         self.handleUpdateMessageBox()
-        
-        self.updateNotes()
         
         # TODO: niepotrzebne, lepiej jakiś refresh
         #self.client.addMsg(m) # TODO: addMsg emituje zmianę zawartości
