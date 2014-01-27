@@ -44,6 +44,8 @@ class WordFilter:
         self.words_csv = words_csv
     def matches(self, msg):
         for word in self.words_csv.split(","):
+            if word.strip()=="":
+                continue
             if word.strip().find(msg.content)!=-1:
                 return True
         return False        
