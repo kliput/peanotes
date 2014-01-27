@@ -215,14 +215,17 @@ class Note(QtGui.QWidget):
         if s == MsgState.GUI:
             self.noteContent.setReadOnly(False)
             send_button = True
+            self.addButton.show()
         elif s == MsgState.TO_SEND:
             send_button = True
+            self.addButton.setDisabled(True)
             self.sendButton.setDisabled(True)
             self.noteContent.setReadOnly(True)
         elif s == MsgState.DELETED:
             self.close()
         else:
             self.sendButton.hide()
+            self.addButton.hide()
             self.noteContent.setReadOnly(True)
             
         if send_button:
@@ -257,7 +260,7 @@ class Note(QtGui.QWidget):
             self.__message__.recipients = self.recipients()
             self.setMessageState(MsgState.TO_SEND)
         self.mainGui.client.addMsg(self.__message__)
-        self.mainGui.client.updateNotes()
+        self.mainGui.updateNotes()
     
     def getMessage(self):
         return self.__message__

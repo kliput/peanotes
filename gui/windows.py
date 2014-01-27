@@ -116,6 +116,8 @@ class SettingsWindow(QWidget):
         self.ui.saveButton.clicked.connect(self.updateFilter)
         
         self.ui.colorBox.addItems(STYLES.keys())
+        
+        self.ui.filtersList.currentItemChanged.connect(self.handleItemChanged)
     
     def init(self):
         pass
@@ -157,4 +159,16 @@ class SettingsWindow(QWidget):
     
     def hideEvent(self, *args, **kwargs):
         self.mainGui.updateNotes()
+        
+    def handleItemChanged(self, current, prev):
+        print "GUI DEBUG item changed to: %s" % current
+        self.ui.conditionsGroup.setEnabled(current is not None)
+        self.ui.removeButton.setEnabled(current is not None)
+        
+        filter_ = self.filters[current.text()]
+        
+        self.ui.fromEdit.setText(filter_.sender)
+        self.ui.toEdit.setText(filter_.recipient)
+        self.ui.containsEdit.setText(filter_.content)
+        
         
