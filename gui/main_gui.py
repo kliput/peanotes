@@ -169,6 +169,7 @@ class MainGui(QObject):
     @Slot()
     def closeApplication(self):
 #        self.saveSettings(self.localSettings) # TODO: settings
+        self.settingsWindow.persistData(self.settingsWindow.filters)
         self.client.stopClient()
         QApplication.quit()
         # TODO: ikona w trayu nie znika

@@ -9,6 +9,9 @@ from core.filters import AndFilter, RecepientFilter, SenderFilter, RegexFilter,\
     WordFilter
     
 from gui.utils import STYLES
+import pickle, collections
+
+CLIENT_USERDATA_PATH = 'user_data/client_userdata.pkl'
  
 class SelectRecipientsWindow(QWidget):
     def __init__(self, note):
@@ -107,7 +110,10 @@ class SettingsWindow(QWidget):
         self.mainGui = mainGui
         self.setWindowIcon(pea_app().tray_icon)
     
-        self.filters = {}
+        self.filters = self.loadData()
+        
+        self.ui.filtersList.addItems([k for k in self.filters.keys()])
+        
         self.iter = 1
         
         self.ui.addButton.clicked.connect(self.addFilter)
@@ -119,6 +125,24 @@ class SettingsWindow(QWidget):
         
         self.ui.filtersList.currentItemChanged.connect(self.handleItemChanged)
     
+    def loadData(self):
+        data = collections.OrderedDict()
+        try:
+            with open(CLIENT_USERDATA_PATH, 'rb') as file_:
+                data = pickle.load(file_)
+            print 'DEBUG: loading %s' % data
+        except IOError:
+            pass
+        return data is None and collections.OrderedDict() or data
+    
+    def persistData(self, data):
+        try:
+            with open(CLIENT_USERDATA_PATH, 'wb') as file_:
+                pickle.dump(data, file_)
+            print 'DEBUG: persist %s' % data
+        except IOError, e:
+            print e
+    
     def init(self):
         pass
     
@@ -127,7 +151,7 @@ class SettingsWindow(QWidget):
         name = 'Filter #%d' % self.iter
         self.iter += 1
         
-        self.filters[name] = (AndFilter([]), 'yellow') # pusty - matchuje wszystko
+        self.filters[name] = (AndFilter([]), 'yellow', {'sender': '', 'recipient': '', 'content': ''}) # pusty - matchuje wszystko
         self.ui.filtersList.addItem(name)
     
     @Slot()
@@ -148,27 +172,39 @@ class SettingsWindow(QWidget):
         if content:
             tmp_fs.append(WordFilter(content))
                 
-        self.filters[item_key] = (AndFilter(tmp_fs), self.ui.colorBox.currentText())
+        self.filters[item_key] = (AndFilter(tmp_fs), self.ui.colorBox.currentText(),
+                                  {'sender': sender, 'recipient': recipient, 'content': content})
         
         self.mainGui.updateNotes()
     
     @Slot()
     def removeFilter(self):
         for item in self.ui.filtersList.selectedItems():
+            print 'DEBUG %s, %s' % (item.text(), self.filters)
+            del self.filters[str(item.text())]
+            print 'DEBUG %s, %s' % (item.text(), self.filters)
             self.ui.filtersList.takeItem(self.ui.filtersList.row(item))
+        self.mainGui.updateNotes()
     
     def hideEvent(self, *args, **kwargs):
         self.mainGui.updateNotes()
         
     def handleItemChanged(self, current, prev):
-        print "GUI DEBUG item changed to: %s" % current
-        self.ui.conditionsGroup.setEnabled(current is not None)
-        self.ui.removeButton.setEnabled(current is not None)
-        
-        filter_ = self.filters[current.text()]
-        
-        self.ui.fromEdit.setText(filter_.sender)
-        self.ui.toEdit.setText(filter_.recipient)
-        self.ui.containsEdit.setText(filter_.content)
+        if current.text() in self.filters.keys():
+            print "GUI DEBUG item changed to: %s" % current
+            self.ui.conditionsGroup.setEnabled(current is not None)
+            self.ui.removeButton.setEnabled(current is not None)
+            
+            filter_ = self.filters[current.text()]
+            
+            self.ui.fromEdit.setText(filter_[2]['sender'])
+            self.ui.toEdit.setText(filter_[2]['recipient'])
+            self.ui.containsEdit.setPlainText(filter_[2]['content'])
+            
+            for i in range(self.ui.colorBox.count()):
+                if self.ui.colorBox.itemText(i) == filter_[1]:
+                    self.ui.colorBox.setCurrentIndex(i)
+                    break
+            
         
         

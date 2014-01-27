@@ -43,6 +43,8 @@ class WordFilter:
     def __init__(self, words_csv):
         self.words_csv = words_csv
     def matches(self, msg):
+        if (msg.content == None or msg.content.strip()==""):
+            return False
         for word in self.words_csv.split(","):
             if word.strip()=="":
                 continue
